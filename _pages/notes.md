@@ -12,13 +12,16 @@ types: [paper_reading, basic]
   <tr>
     <th>{{t}}</th>
   </tr>
-  {% for note in site.notes %}
+  {% for note in sorted_notes %}
+    {% if note.not_published %}
+    {% else %}
     {% if note.note_type == t %}
         <tr>
             <td>
                 <a href="{{ note.url | relative_url }}">{{ note.title }}</a>
             </td>
         </tr>
+    {% endif %}
     {% endif %}
   {% endfor %}
 </table>
