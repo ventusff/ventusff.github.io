@@ -1,8 +1,8 @@
 # -----------------------------------------------------------------------------
 # Site settings
 # -----------------------------------------------------------------------------
-name: Your Name
-email: you@example.com
+name: Jianfei Guo
+email: ffventus@gmail.com
 description: > # this means to ignore newlines until "url:"
   A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
 footer_text: >
@@ -11,13 +11,13 @@ footer_text: >
   Photos from <a href="https://unsplash.com" target="_blank">Unsplash</a>.
 
 url:  # the base hostname & protocol for your site
-baseurl: /al-folio # the subpath of your site, e.g. /blog/
-last_updated: # leave blank if you don't want to display last updated
+baseurl:  # the subpath of your site, e.g. /blog/
+last_updated: true # leave blank if you don't want to display last updated
 
 # -----------------------------------------------------------------------------
 # Social integration
 # -----------------------------------------------------------------------------
-github_username: # your GitHub user name
+github_username: ventusff # your GitHub user name
 twitter_username: # your Twitter handle
 linkedin_username: # your LinkedIn user name
 scholar_userid: # your Google Scholar ID
@@ -33,11 +33,11 @@ google_analytics: UA-XXXXXXXXX # out your google-analytics code
 # -----------------------------------------------------------------------------
 # Blog
 # -----------------------------------------------------------------------------
-blog_name: al-folio
-blog_description: a simple whitespace theme for academics
+blog_name: Thoughts
+# blog_description: a simple whitespace theme for academics
 
 # Pagination
-paginate: 4
+paginate: 8
 permalink: /blog/:year/:title/
 paginate_path: /blog/page:num/
 
@@ -50,9 +50,10 @@ text:
 disqus_shortname: al-folio # put your disqus shortname
 
 # Optional features
-show_social_icons:  false
-enable_anchorjs:    false
-enable_katex:       true
+show_social_icons:  true
+enable_anchorjs:    true
+enable_katex:       false
+enable_math:        true
 
 # -----------------------------------------------------------------------------
 # Collections
@@ -66,6 +67,16 @@ collections:
   projects:
     output: true
     permalink: /projects/:path/
+  notes:
+    output: true
+    permalink: /notes/:path
+
+defaults:
+  - scope:
+      path: ""
+      type: notes
+    values:
+      layout: post
 
 news_limit: 5
 
@@ -91,10 +102,10 @@ plugins:
 # Jekyll-Scholar
 scholar:
 
-  last_name: Einstein
+  last_name: Guo
 
   style: apa
-  locale: en
+  locale: zh
 
   sort_by: year
   order: descending
@@ -118,3 +129,5 @@ scholar:
 jquery_version: "1.12.4"
 katex_version: "0.9.0"
 anchorjs_version: "3.2.2"
+mathjax:
+  version: "3.1.2"

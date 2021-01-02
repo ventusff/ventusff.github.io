@@ -1,0 +1,18 @@
+{% if site.enable_mermaid %}
+<!-- Mermaid Js -->
+<script>
+    var config = {
+        startOnLoad:true,
+        theme: 'base', // forest
+        securityLevel: 'loose',
+        flowchart:{
+                useMaxWidth:true,
+                htmlLabels:false, // important for not squeezing blocks
+            }
+    };
+    const theme =localStorage.getItem("theme");
+    if(theme == "dark") config.theme = 'dark';  // currently needs to refresh to make dark mode toggle
+    mermaid.initialize(config);
+    window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
+</script>
+{% endif %}

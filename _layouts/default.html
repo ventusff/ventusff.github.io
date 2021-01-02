@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html>
-
-  {% include head.html %}
+  <head>
+    {% include head.html %}
+    {% include mathjax.html %}
+    {% include mermaid_before.html %}
+  </head>
 
   <body>
 
@@ -17,6 +20,7 @@
     {% include footer.html %}
 
     {% include hemline.html %}
+    {% include mermaid_after.html %}
 
   </body>
 
