@@ -1,18 +1,93 @@
 {% if site.enable_mermaid %}
 <!-- Mermaid Js -->
 <script>
-    var config = {
-        startOnLoad:true,
-        theme: 'base', // forest
-        securityLevel: 'loose',
-        flowchart:{
-                useMaxWidth:true,
-                htmlLabels:false, // important for not squeezing blocks
+
+    // mermaid rendering: inspired by https://stackoverflow.com/questions/53883747/how-to-make-github-pages-markdown-support-mermaid-diagram
+    // mermiad in details tag: inspired by https://gitlab.com/gitlab-org/gitlab/-/issues/28495
+    //          and by https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/assets/javascripts/behaviors/markdown/render_mermaid.js
+
+    function renderMermaids($els) {
+        if (!$els.length) return;
+
+        var config = {
+            startOnLoad: false,
+            theme: 'neutral', // forest
+            securityLevel: 'loose',
+            flowchart:{
+                    useMaxWidth:true,
+                    htmlLabels:false, // important for not squeezing blocks
+                }
+        };
+        // const theme =localStorage.getItem("theme");
+        // if(theme == "dark") config.theme = 'dark';  // currently needs to refresh to make dark mode toggle
+        mermaid.initialize(config);
+
+        $els.each((i, el) => {
+            
+            console.log(i);
+            console.log(el);
+
+            // Mermaid doesn't like `<br />` tags, so collapse all like tags into `<br>`, which is parsed correctly.
+            const source = el.textContent.replace(/<br\s*\/>/g, '<br>');
+
+            // Remove any extra spans added by the backend syntax highlighting.
+            Object.assign(el, { textContent: source });
+
+            mermaid.init(undefined, el, id => {
+                const svg = document.getElementById(id);
+                console.log('in mermaid.init');
+                console.log(el);
+                console.log(id);
+                console.log(svg.classList);
+                console.log('out of mermaid.init');
+
+                // As of https://github.com/knsv/mermaid/commit/57b780a0d,
+                // Mermaid will make two init callbacks:one to initialize the
+                // flow charts, and another to initialize the Gannt charts.
+                // Guard against an error caused by double initialization.
+                if (svg.classList.contains('mermaid')) {
+                    console.log("return");
+                    return;
+                }
+
+                // svg.classList.add('mermaid'); //will add new bug
+
+                // pre > code > svg
+                svg.closest('pre').replaceWith(svg);
+
+                // We need to add the original source into the DOM to allow Copy-as-GFM
+                // to access it.
+                const sourceEl = document.createElement('text');
+                sourceEl.classList.add('source');
+                sourceEl.setAttribute('display', 'none');
+                sourceEl.textContent = source;
+
+                svg.appendChild(sourceEl);
+
+            });
+        });
+
+    }
+
+    const $els = $(document).find('.language-mermaid');
+    if ($els.length)
+    {
+        const visibleMermaids = $els.filter(function filter() {
+            return $(this).closest('details').length === 0 && $(this).is(':visible');
+        });
+
+        renderMermaids(visibleMermaids);
+
+        $els.closest('details').one('toggle', function toggle() {
+            if (this.open) {
+                console.log("find in mermaids contains details");
+                console.log($(this).find('.language-mermaid'));
+                renderMermaids($(this).find('.language-mermaid'));
             }
-    };
-    // const theme =localStorage.getItem("theme");
-    // if(theme == "dark") config.theme = 'dark';  // currently needs to refresh to make dark mode toggle
-    mermaid.initialize(config);
-    window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
+        });
+    }
+
+
+
 </script>
 {% endif %}
