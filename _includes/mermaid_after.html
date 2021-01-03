@@ -10,8 +10,8 @@
                 htmlLabels:false, // important for not squeezing blocks
             }
     };
-    const theme =localStorage.getItem("theme");
-    if(theme == "dark") config.theme = 'dark';  // currently needs to refresh to make dark mode toggle
+    // const theme =localStorage.getItem("theme");
+    // if(theme == "dark") config.theme = 'dark';  // currently needs to refresh to make dark mode toggle
     mermaid.initialize(config);
     window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
 </script>
