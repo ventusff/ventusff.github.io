@@ -56,6 +56,7 @@ $light-pink:        #ffdddd !default;
 $yellow:            #efcc00 !default;
 
 $white:             #fff !default;
+$darker-gray:       #181818 !default;
 $dark-gray:         #333 !default;
 $mid-gray:          #666 !default;
 $light-gray:        #ccc !default;
@@ -71,8 +72,9 @@ $darken-3:          rgba(#000,.25) !default;
 $darken-4:          rgba(#000,.5) !default;
 
 $theme-color:       $dark-blue;
-$code-color:        $dark-gray;
-$text-color:        $mid-gray;
+$code-color:        $darker-gray;
+// $text-color:        $mid-gray;
+$text-color:        $dark-gray;
 $background-color:  white;
 
 // Links
