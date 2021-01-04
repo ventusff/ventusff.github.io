@@ -1,3 +1,4 @@
 [submodule "_notes"]
 	path = _notes
 	url = git@github.com:ventusff/notes.git
+	branch = main
