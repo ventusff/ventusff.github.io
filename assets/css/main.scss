@@ -3,6 +3,7 @@
 ---
 @charset "utf-8";
 
+$number-categories: {{ site.categories | size }};
 
 @import 'variables';
 @import 'media-queries';
@@ -32,3 +33,4 @@
 @import 'social-icons';
 @import 'tables';
 @import 'typography';
+@import 'syntax-highlighting';

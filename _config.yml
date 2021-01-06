@@ -55,6 +55,7 @@ enable_anchorjs:    true
 enable_katex:       false
 enable_math:        true
 enable_mermaid:     true
+enable_fancybox:    true
 
 # -----------------------------------------------------------------------------
 # Collections

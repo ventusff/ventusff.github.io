@@ -20,6 +20,12 @@
 </script>
 {% endif %}
 
+{% if site.enable_fancybox %}
+<!-- Load fancybox -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+{% endif %}
+
 <!-- Include custom icon fonts -->
 <link rel="stylesheet" href="{{ '/assets/css/fontawesome-all.min.css' | prepend: site.baseurl | prepend: site.url }}">
 <link rel="stylesheet" href="{{ '/assets/css/academicons.min.css' | prepend: site.baseurl | prepend: site.url }}">

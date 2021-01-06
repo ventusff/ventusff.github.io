@@ -9,6 +9,42 @@
     font-size: 60px;
     margin: 10px;
 }
-.center{
+.center {
     text-align: center;
 }
+
+.responsive-container {
+	width: 90%;
+	padding-top:56%;
+	position: relative;
+	overflow:hidden;
+}
+
+@mixin generateRatios($width, $height, $prefix: "ratio") {
+  @for $scale from 1 through 10 {
+	  $class-name: $prefix + '-' + (10*$scale) + '-' + $width + "x" + $height;
+	  .#{$class-name} {
+		margin: auto;
+	  	width: $scale*10%;
+	  	position: relative;
+	  	overflow:hidden;
+	    padding-top: $height/$width*$scale*10%;
+		@include media-query($on-palm) {
+			width: 100%;
+			padding-top: $height/$width*100%;
+		}
+		iframe {
+			width: 100%;
+			height: 100%;
+			top:0;
+			bottom:0;
+			left:0;
+			right:0;
+			position:absolute;
+		}
+	  }
+  }
+  //result eg. .ratio-90-16x9
+}
+ 
+@include generateRatios(16,9); // 16x9

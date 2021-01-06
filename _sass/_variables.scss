@@ -26,6 +26,7 @@ $h00-responsive-max: 7.68rem !default;
 $h0-responsive-max: 5.76rem !default;
 $h1-responsive-max: 3.84rem !default;
 $abbr-border-bottom: 1px black dotted;
+$p-align: justify;
 
 // Page width
 $measure-width: 42rem !default;
@@ -61,6 +62,7 @@ $dark-gray:         #333 !default;
 $mid-gray:          #666 !default;
 $light-gray:        #ccc !default;
 $lighter-gray:      #eee !default;
+$black:				#000 !default;
 
 $grey-color:        #828282;
 $grey-color-light:  lighten($grey-color, 40%);
@@ -73,7 +75,7 @@ $darken-4:          rgba(#000,.5) !default;
 
 $theme-color:       $dark-blue;
 $code-color:        $darker-gray;
-// $text-color:        $mid-gray;
+$code-background-color: #FAFAFA;
 $text-color:        $dark-gray;
 $background-color:  white;
 
@@ -157,10 +159,11 @@ $footer-font-size: .75rem;
 
 
 /* portfolio tinkering */
-$img_spacing: 5px;
+$img-spacing: 15px;
 $img-height: 275px;
 $caption-font-size: 12px;
 $caption-color: #aaa;
+$portfolio-picture-rounding: 0%;
 
 /* add on-palm to be consistent with other jekyll theme media queries */
 $on-palm:  600px !default;
