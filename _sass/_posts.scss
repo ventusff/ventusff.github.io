@@ -46,7 +46,15 @@
 	}
 	.center {
 		text-align: center;
-	}
+    }
+    
+    // default image style
+    img {
+        margin:0 15px;
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+    }
 	
 }
 .post-meta {
