@@ -4,7 +4,7 @@
 name: Jianfei Guo
 email: ffventus@gmail.com
 description: > # this means to ignore newlines until "url:"
-  A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
+  Jianfei Guo. ffventus (at) gmail.com. I am a learner in representation learning and decision making. 
 footer_text: >
   Powered by <a href="http://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme.
   Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
@@ -24,6 +24,9 @@ scholar_userid: # your Google Scholar ID
 orcid_id: # your ORCID ID
 medium_username: # your Medium username
 quora_username: # your Quora username
+bilibili_uid: 14689199
+# zhihu_id: guo-jian-fei-32
+
 
 contact_note: >
   You can even add a little note about which of these is the best way to reach you.
