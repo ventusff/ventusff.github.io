@@ -19,6 +19,7 @@ types: [paper_reading, basic]
         <tr>
             <td>
                 <a href="{{ note.url | relative_url }}">{{ note.title }}</a>
+                {% if note.title_cn %}<div class="post-meta">{{note.title_cn}}</div>{% endif %}
             </td>
         </tr>
     {% endif %}
