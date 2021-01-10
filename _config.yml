@@ -12,7 +12,7 @@ footer_text: >
 
 url: https://ventusff.github.io # the base hostname & protocol for your site
 baseurl:  # the subpath of your site, e.g. /blog/
-last_updated: true # leave blank if you don't want to display last updated
+last_updated:  # leave blank if you don't want to display last updated
 
 # -----------------------------------------------------------------------------
 # Social integration
@@ -28,8 +28,8 @@ bilibili_uid: 14689199
 # zhihu_id: guo-jian-fei-32
 
 
-contact_note: >
-  You can even add a little note about which of these is the best way to reach you.
+# contact_note: >
+#   You can even add a little note about which of these is the best way to reach you.
 
 google_analytics: UA-XXXXXXXXX # out your google-analytics code
 
