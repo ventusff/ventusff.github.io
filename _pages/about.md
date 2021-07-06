@@ -18,5 +18,5 @@ My life goal is to make AI that trully understands this world and its rich scien
 
 My current research interest lies in 3D scene generation/understanding and representation learning.
 
-Contact: [ffventus [at] gmail.com](mailto:ffventus@gmail.com) or [guojianfei [at] pjlab.org.cn](mailto:guojianfei@pjlab.org.cn)
+Contact: [ffventus [at] gmail.com](mailto:ffventus@gmail.com) or [guojianfei [at] pjlab.org.cn](mailto:guojianfei@pjlab.org.cn)  
 Address: Shanghai, China
