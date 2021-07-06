@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>Jianfei Guo | math and DL for rigid body poses</title>
+  <meta name="description" content="Jianfei Guo. ffventus (at) gmail.com. I am a learner in representation learning and decision making. 
+">
+
+  <link rel="shortcut icon" href="https://ventusff.github.io/assets/img/favicon.ico?v=1">
+
+  <link rel="stylesheet" href="https://ventusff.github.io/assets/css/main.css">
+  <link rel="canonical" href="https://ventusff.github.io/notes/deep_pose">
+  
+
+    
+<!-- MathJax -->
+<script type="text/javascript">
+  window.MathJax = {
+    tex: {
+      tags: 'ams',
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ], // http://docs.mathjax.org/en/latest/input/tex/delimiters.html
+      displayMath: [['\\[','\\]'], ['$$','$$']]
+    }
+  };
+</script>
+<script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js"></script>
+<script defer src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+
+    
+<!-- Mermaid Js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/8.7.0/mermaid.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script> // this is the old version --> 
+
+  </head>
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    
+    <span class="site-title">
+        
+        <strong>Jianfei</strong> Guo
+    </span>
+    
+
+    <nav class="site-nav">
+      <input type="checkbox" id="nav-trigger" class="nav-trigger">
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewbox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"></path>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"></path>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"></path>
+            </svg>
+          </span>
+        </label>
+
+      <div class="trigger">
+        <!-- About -->
+        <a class="page-link" href="https://ventusff.github.io/">about</a>
+
+        <!-- Blog -->
+        <a class="page-link" href="https://ventusff.github.io/blog/">blog</a>
+
+        <!-- Pages -->
+        
+          
+        
+          
+        
+          
+        
+          
+            <a class="page-link" href="https://ventusff.github.io/notes/">notes</a>
+          
+        
+          
+        
+          
+        
+          
+        
+
+        <!-- CV link -->
+        <!-- <a class="page-link" href="https://ventusff.github.io/assets/pdf/CV.pdf">vitae</a> -->
+
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">math and DL for rigid body poses</h1>
+    <p class="post-subtitle">刚体姿态相关的数学与DL类方法</p>
+    <p class="post-meta"></p>
+  </header>
+
+  <article class="post-content">
+    <ul id="markdown-toc">
+  <li>
+<a href="#deep-learning-perform-regression-on-6d-pose--transformation" id="markdown-toc-deep-learning-perform-regression-on-6d-pose--transformation">deep learning perform [regression on 6D pose] / [transformation]</a>    <ul>
+      <li><a href="#topic-object-6d-pose-estimation-from-images" id="markdown-toc-topic-object-6d-pose-estimation-from-images">topic: object 6D pose estimation from images</a></li>
+      <li><a href="#topic-regression-3d-transformation--regression-6d-pose" id="markdown-toc-topic-regression-3d-transformation--regression-6d-pose">topic: regression 3d transformation / regression 6d pose</a></li>
+      <li><a href="#topic-regression-3d-transformation-gcn" id="markdown-toc-topic-regression-3d-transformation-gcn">topic: regression 3d transformation GCN</a></li>
+      <li><a href="#topic-human-pose-estimation" id="markdown-toc-topic-human-pose-estimation">topic: human pose estimation</a></li>
+      <li><a href="#topic-pose-estimation--regression--ambiguity-%E5%A6%82%E4%BD%95%E6%B6%88%E9%99%A4ambiguity" id="markdown-toc-topic-pose-estimation--regression--ambiguity-如何消除ambiguity">topic: pose estimation / regression + ambiguity 如何消除ambiguity</a></li>
+    </ul>
+  </li>
+</ul>
+
+<hr>
+
+<h2 id="deep-learning-perform-regression-on-6d-pose--transformation">deep learning perform [regression on 6D pose] / [transformation]</h2>
+
+<h3 id="topic-object-6d-pose-estimation-from-images">topic: object 6D pose estimation from images</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>paper</th>
+      <th>method</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DPOD: 6D Pose Object Detector and Refiner</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>[ICCV2017] SSD-6D: Making rgb-based 3d detection and 6d pose estimation great again</td>
+      <td>extended the ideas of the 2D object detector [20] by 6D pose estimation based on a discrete viewpoint classification rather than direct regression of rotations.<br>用离散的viewpoint分类而不是直接回归rotations  <br>The method is rather slow and poses predicted this way are quite inaccurate since they are only a rough discrete approximation of the real poses.<br>这种方法非常慢卡而且预测出的pose很不精确，since他们只是rough discrete approximation. <br><strong>The refinement is a must in order to produce presentable results.</strong>
+</td>
+    </tr>
+    <tr>
+      <td>[ICCV2017] BB8: A scalable, accurate, robust to partial occlusion method for predicting the 3d poses of challenging objects without using depth.</td>
+      <td>uses a three-stage approach. <br>头两个阶段coarse-to-fine的进行segmentation<br>然后把结果喂到第3个网络去输出projections of the object’s bounding box points<br>==已知了2D-3D相关性==，可以用PnP算法来估计6D pose<br>主要是因为多阶段导致运算速度比较低</td>
+    </tr>
+    <tr>
+      <td>[CVPR2018] YOLO6D: Real-time seamless single shot 6d object pose prediction.</td>
+      <td>build on BB8 and YOLO<br>高效而精确地检测物体和估计pose，不需要refinement.<br>像在BB8中的情况一样，这里的核心feature是 perform the regression of <strong>reprojected bounding box corners in the image.</strong><br>这种参数化的优势：相对地紧凑性，以及没有带来的pose ambiguity(模棱两可)像直接回归旋转时会遇到的&gt;</td>
+    </tr>
+    <tr>
+      <td>Pix2Pose: Pixel-Wise Coordinate Regression of Objects for 6D Pose Estimation</td>
+      <td>2D-3D correspondence + PnP + RANSAC</td>
+    </tr>
+    <tr>
+      <td>[CVPR2020] Single-Stage 6D Object Pose Estimation</td>
+      <td>2D-3D correspondence + PnP + RANSAC</td>
+    </tr>
+    <tr>
+      <td>[CVPR2020] HybridPose: 6D Object Pose Estimation under Hybrid Representations</td>
+      <td>大杂烩</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"DPOD: 6D Pose Object Detector and Refiner"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">ICCV2019</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/1902.11020v3.pdf">[paper]</a></strong> <strong><a href="https://github.com/yshah43/DPOD">[code]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">TUM</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Siemens Corporate Technology</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Sergey Zakharov</code>, <code class="language-plaintext highlighter-rouge">Ivan Shugurov</code>, <code class="language-plaintext highlighter-rouge">Slobodan Ilic</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">6D pose esimation [2020 SOTA]</code>, <code class="language-plaintext highlighter-rouge">correspondence</code></em> <strong>]</strong></p>
+
+<p>[思考：虽然我们的生成模型用不上这里的一些计算设定方式，但是在图定位的时候这个会很有用]</p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li><strong>Motivation</strong></li>
+    <li>
+<strong>相关研究</strong>
+      <ul>
+        <li>full 6D detection from RGB images
+          <ul>
+            <li>SSD6D</li>
+            <li>YOLO6D -&gt; real</li>
+            <li>AAE</li>
+            <li>PoseCNN -&gt; real</li>
+            <li>PVNet -&gt; real</li>
+            <li>BB8</li>
+            <li>iPose</li>
+          </ul>
+        </li>
+        <li>datasets
+          <ul>
+            <li>LineMOD</li>
+            <li>OCCLUSION</li>
+          </ul>
+        </li>
+        <li>refiners：在检测后还要再进行一次refinement</li>
+      </ul>
+    </li>
+  </ul>
+
+  <table>
+    <thead>
+      <tr>
+        <th><img src="media/image-20201101163039928.png" alt="image-20201101163039928"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Pipeline</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <ul>
+    <li>
+<strong>大概思路</strong>
+      <ul>
+        <li>首先，每个物体都有一个具体的材质图-三维模型对应；知道材质图上的uv坐标就知道物体模型三维坐标系下的坐标；<em>vice versa.</em>
+</li>
+        <li>然后，在预测的时候，事实上是预测RGB中的每个像素都属于哪个物体，属于那个物体的材质图中的哪一个uv像素；</li>
+        <li>这样，知道了RGB中的每个点对应物体的材质uv图，也就知道了每个点对应物体的三维坐标系值；这样一来，其实对于每个物体，就相当于知道了一些关键点的在物体三维坐标系下的坐标和图像坐标以及相机内参矩阵，于是可以利用PnP算法来计算相机在物体坐标系下的外参；反过来就知道了物体在相机坐标系下的坐标</li>
+        <li>\(\Delta\) 即关键feature是不直接预测rotations itself (因为会有pose ambiguity问题)，而是预测uv map；
+          <ul>
+            <li>思考：我们如果同时预测\(cos(\theta)\)和\(sin(\theta)\)，是不是就可以避免这个问题？
+              <ul>
+                <li>预测的输出要满足\(cos(\theta)^2+sin(\theta)^2=1\)，这样可以吗？
+                  <ul>
+                    <li>搜索了一圈以后的回答：
+似乎存在一个explicitly normalized 操作
+现在这些回归四元数q的方法都可以做到这一点</li>
+                  </ul>
+                </li>
+                <li>只预测\(cos(\theta)\) 不够，不够一圈；那么预测\(tan(\theta)\)可以吗？可能不如预测cos,sin的语义更强，毕竟旋转矩阵操作的时候本身就是由sin,cos构成的</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>correspondence mapping</strong> ==(2D-3D correspondence)==</li>
+    <li>有一个三维模型数据集
+      <ul>
+        <li>数据集中的每一个三维model的材质都是用correspondence map来建模的</li>
+        <li>用simple spherical 或者 cylindrical投射的方式给物体上材质</li>
+        <li><img src="media/image-20201101170837857.png" alt="image-20201101170837857"></li>
+        <li>这样便建立了一个bijective(双射)函数：</li>
+        <li>给定一个材质图上的u,v点，我们便知道了其三维模型坐标；
+          <ul>
+            <li>给定了三维模型坐标，可以计算出材质图上的u,v点</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>pipeline</strong>
+      <ul>
+        <li>
+<strong>correspondence block</strong>
+          <ul>
+            <li>有3个通道的输出，预测3个信息：ID,u,v值</li>
+            <li><img src="media/image-20201101171756785.png" alt="image-20201101171756785"></li>
+            <li>也就是预测图片中的每个像素属于哪个ID，以及属于那个ID的材质图中的哪个point</li>
+          </ul>
+        </li>
+        <li>
+<strong>pose block</strong> 负责预测pose
+          <ul>
+            <li>给定一个估计的ID mask，我们可以观察哪些物体在图片中被检测到了、以及他们的2D位置；</li>
+            <li>correspondence 把每一个2D point映射到一个真实三维模型的坐标系下
+              <ul>
+                <li>这个三维坐标系其实是模型定义材质时候的那个三维坐标系</li>
+              </ul>
+            </li>
+            <li>然后就可以用PnP算法来计算6D Pose；
+              <ul>
+                <li>相当于给定了一些关键点的2D坐标、3D坐标、相机内参矩阵，估计相机外参矩阵</li>
+                <li>相机外参矩阵是相机在物体三维模型坐标系下的位置，事实逆一下就是物体在相机坐标系下的位置</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>pose refinement
+      <ul class="task-list">
+        <li class="task-list-item">
+<input type="checkbox" class="task-list-item-checkbox" disabled>Q: what?</li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<h3 id="topic-regression-3d-transformation--regression-6d-pose">topic: regression 3d transformation / regression 6d pose</h3>
+
+<ul>
+  <li>
+<strong>keyword</strong>
+    <ul>
+      <li>neural network regression 3d transformation</li>
+      <li>3d pose regression</li>
+      <li>deep 3d pose regression</li>
+      <li>
+<strong><em>3D Pose Regression Using Convolutional Neural Networks</em></strong> 被引
+        <ul>
+          <li>发现这个就是一般的四元数计算推导；有些论文并没有引用它</li>
+        </ul>
+      </li>
+      <li>(deep) pose regression quaternion</li>
+      <li>pose estimation quaternion</li>
+    </ul>
+  </li>
+</ul>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge"> &lt; 109被引 &gt; "3D Pose Regression Using Convolutional Neural Networks"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">ICCV2017</code> <strong>]</strong> <strong><a href="https://openaccess.thecvf.com/content_ICCV_2017_workshops/papers/w31/Mahendran_3D_Pose_Regression_ICCV_2017_paper.pdf">[paper]</a></strong>  <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">JHU</code> <strong>]</strong> <br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Siddharth Mahendran</code>, <code class="language-plaintext highlighter-rouge">Haider Ali</code>, <code class="language-plaintext highlighter-rouge">Rene Vidal</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code>, <code class="language-plaintext highlighter-rouge">efgh</code></em> <strong>]</strong></p>
+
+<p>[ 3D pose estimation，其实只考虑旋转角，没有考虑位移 ]</p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>2017年的认知：大多数这类任务是用的pose分类问题，把pose space分成离散的bins，用CNN分类器
+      <ul>
+        <li>所以作者要用CNN regression framework</li>
+        <li>主要针对的还是 pose estimation问题</li>
+        <li>挑战在于：3D pose space是非欧几里得的，因此CNN算法需要修改来应对输出空间的非线性</li>
+      </ul>
+    </li>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>设计了一个CNN框架来解决连续域下的pose 估计问题，通过设计一个尊重3D pose 空间非线性结构的合适的表征、数据增强和loss函数</li>
+      </ul>
+    </li>
+    <li>
+<strong>具体细节</strong>
+      <ul>
+        <li>网络
+          <ul>
+            <li>feature network, shared between 所有的物体类别；</li>
+            <li>pose network，为每个类别单独设计</li>
+          </ul>
+        </li>
+        <li>表征：两种表征：轴角和四元数</li>
+      </ul>
+    </li>
+    <li>representing 3D poses
+      <ul>
+        <li>一个三维旋转群的定义：\(SO(3)\dot=\{R:R \in \mathbb{R}^{3 \times 3}, R^TR=I_3, det(R)=1 \}\)</li>
+        <li>然后可以定义两个旋转矩阵\(R_1\), \(R_2\)之间的测地距离(<code class="language-plaintext highlighter-rouge">geodesic distance</code>)<br>\(d(R_1, R_2)=\frac {\lVert \log(R_1R_2^T) \rVert_F} {\sqrt{2}}\)</li>
+        <li>
+<strong>axis-angle</strong> 轴角定义
+          <ul>
+            <li>一个旋转矩阵\(R\)代表着3D点绕着轴\(v\)旋转角\(\theta\) , \(\lVert v \rVert_2=1\)</li>
+            <li>这可以被表达为 \(R=\exp(\theta[v]_\times)\)
+              <ul>
+                <li>\(\exp\)是矩阵指数</li>
+                <li>\([v]_\times\)是\(v\)的skew-symmetric操作符，i.e., \([v]_\times=\left( \begin{smallmatrix} 0 &amp; -v_3 &amp; v_2 \\ v_3 &amp; 0 &amp; -v_1 \\ -v_2 &amp; v_1 &amp; 0 \end{smallmatrix} \right)\)  for \(v=[v_1,v_2,v_3]^T\)
+                  <ul>
+                    <li>skew-symmetric 斜对称矩阵，\(A=-A^T\)  i.e.  \(a_{ij}=-a_{ji}\)</li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+            <li>因此，每一个旋转矩阵\(R\)有一个相应的aixs-angle vector  \(y=\theta v\), vice-versa
+              <ul>
+                <li>限制 \(\theta \in [0,\pi)\)，定义\(R=I_3 \iff y=\boldsymbol{0}_3\) ，保证旋转矩阵R和表征y的单一映射</li>
+                <li>矩阵指数可以被简化为\(R=I_3+\sin\theta[v]_\times+(1-\cos\theta)[v]_\times\)，用Rodrigues’ rotation formula</li>
+              </ul>
+            </li>
+            <li>于是，\(d(R_1, R_2)=\frac {\lVert \log(R_1R_2^T) \rVert_F} {\sqrt{2}}\)可以被简化为：
+              <ul>
+                <li>
+\[d_A(R_1,R_2)=\cos^{-1}[\frac {tr(R_1^TR^2)-1} {2}]\]
+                </li>
+                <li>注意到 \(\lVert \log\left( \exp(\theta_1[v_1]_\times)\exp(\theta_2[v_2]_\times)^T \right)\rVert_F /\sqrt{2}\) 看上去很像 \(\lVert \theta_1 v_1 - \theta_2 v_2 \rVert_2\) ，但是他们不一样，因为\(\exp(\theta_1[v_1]_\times)\exp(\theta_2[v_2]_\times)^T \neq  \exp\left( \theta_1[v_1]_{\times}-\theta_2[v_2]_{\times} \right)\) in general. 这个等式只在 matrices \([v_1]_{\times}\)和\([v_2]_{\times}\) commute时才成立。i.e. \(v_1=\pm v_2\)</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>
+<strong>quaternion</strong> 四元数定义 另一个3D旋转矩阵常用的表征
+          <ul>
+            <li>给定一个轴角向量\(y=\theta v\)，相应的四元数\(q=(c,s)\)由\((\cos \frac {\theta} {2}, \sin \frac {\theta} {2} v)^T\)
+              <ul>
+                <li>在构造时，四元数是unit-norm的（单位正交），\(\lVert q \rVert_2=1\)</li>
+                <li>使用四元数代数，我们有：\((c_1,s_1)\cdot (c_2, s_2)=\left( c_1 c_2-\langle s_1,s_2 \rangle, c_1s_2+c_2s_1+s_1\times s_2 \right)\) 以及 \((c,s)^{-1}=(c,-s)\)对于单位正交\(q=(c,s)\).
+                  <ul>
+                    <li>这里是四元数乘法的定义，以及单位正交四元数的性质(共轭为逆运算)</li>
+                  </ul>
+                </li>
+                <li>现在，用四元数来表达\(d(R_1, R_2)=\frac {\lVert \log(R_1R_2^T) \rVert_F} {\sqrt{2}}\)：
+                  <ul>
+                    <li>\(d(q_1,q_2)=2\cos^{-1}(\lvert c \rvert) \quad where \quad (c,s)=q_1^{-1}\cdot q_2\) ，再简化一些得到：<br>\(d_Q(q_1,q_2)=2\cos^{-1} \left( \lvert \langle q_1, q_2 \rangle \rvert \right)\)
+                      <ul>
+                        <li>加绝对值是为了handle double cover问题</li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>网络结构</strong>
+      <ul>
+        <li>对于轴角表示：
+          <ul>
+            <li>输出\(\theta v\)，用\(\pi \tanh\) 非线性激活层来建模 约束\(\theta \in [0,\pi)\) 与 \(v_i \in [-1,1]\)</li>
+            <li>用\(\mathcal{L}=d_A(R,\hat{R})=\cos^{-1}[\frac {tr(R_1^TR^2)-1} {2}]\)来最优化</li>
+            <li>==思考==：这里还是直接回归角度，是否还是会存在pose-ambiguity问题？也许angle 会存在一个既接近0又接近\(\pi\)的值？是否会因为这个有影响？</li>
+            <li>loss这头先在没有影响了，因为用的是geodesic loss
+              <ul>
+                <li>主要是输出这头，可能在输出时存在ambiguity</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>==思考==：用一个周期性的激活函数是否可以消除这个问题？</li>
+        <li>对于四元数表示：
+          <ul>
+            <li>输出是一个4维量，单位正交约束通过 choosing the non-linearity as L2 normalization 来保证
+              <ul class="task-list">
+                <li class="task-list-item">
+<input type="checkbox" class="task-list-item-checkbox" disabled>Q: what ?</li>
+              </ul>
+            </li>
+            <li>用\(\mathcal{L}=d_Q(R,\hat{R})=2\cos^{-1} \left( \lvert \langle q_1, q_2 \rangle \rvert \right)\) 来最优化</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;not deep&gt; "Regression of 3D Rigid Transformations on Real-Valued Vectors in Closed Form"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">ICRA2017</code> <strong>]</strong> <strong><a href="https://ieeexplore.ieee.org/document/7989757">[paper]</a></strong> <strong>[[code]]</strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">NAIST(Japan)</code>, <code class="language-plaintext highlighter-rouge">Kyoto University京都大学</code>, <code class="language-plaintext highlighter-rouge">Kwansei Gakuin University関西学院大学</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Takuya Funatomi</code>, <code class="language-plaintext highlighter-rouge">Masaaki Iiyama</code>, <code class="language-plaintext highlighter-rouge">Koh Kakusho</code>, <code class="language-plaintext highlighter-rouge">Michihiko Minoh</code> <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code>, <code class="language-plaintext highlighter-rouge">efgh</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li><strong>Motivation</strong></li>
+  </ul>
+
+</details>
+
+<h3 id="topic-regression-3d-transformation-gcn">topic: regression 3d transformation GCN</h3>
+
+<ul>
+  <li>
+<strong>keyword</strong>
+    <ul>
+      <li>regression transformation tree GCN</li>
+      <li>regression tf tree GCN</li>
+      <li>encoder-decoder tranformation/tf tree GCN</li>
+      <li>encoder-decoder for 3d transformations</li>
+      <li>neural representations with implicit transformations</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="topic-human-pose-estimation">topic: human pose estimation</h3>
+
+<ul>
+  <li>考虑人的各个关节的pose就是由关系约束的，这里可能有一些带关系约束的pose估计</li>
+  <li>==考虑==：有没有用关系/GCN + 生成模型/neural representations去解决human pose estimation的
+    <ul>
+      <li>这里面有些2D pose, 3D pose, 3D joint loss等公共问题</li>
+      <li>
+    </ul>
+  </li>
+  <li><strong>keyword</strong></li>
+</ul>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Semantic Graph Convolutional Networks for 3D Human Pose Regression"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">CVPR2019</code> <strong>]</strong> <strong><a href="https://openaccess.thecvf.com/content_CVPR_2019/papers/Zhao_Semantic_Graph_Convolutional_Networks_for_3D_Human_Pose_Regression_CVPR_2019_paper.pdf">[paper]</a></strong> <strong><a href="https://github.com/garyzhao/SemGCN">[code]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Rutgers University</code>,<code class="language-plaintext highlighter-rouge">Binghamton University</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Long Zhao</code>, <code class="language-plaintext highlighter-rouge">Xi Peng</code>, <code class="language-plaintext highlighter-rouge">Yu Tian</code>, <code class="language-plaintext highlighter-rouge">Mubbasir Kapadia</code>, <code class="language-plaintext highlighter-rouge">Dimitris N. Metaxas</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code>, <code class="language-plaintext highlighter-rouge">efgh</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li><img src="media/image-20201102113621308.png" alt="image-20201102113621308"></li>
+      </ul>
+    </li>
+    <li>
+<strong>loss function</strong>
+      <ul>
+        <li><img src="media/image-20201102114343918.png" alt="image-20201102114343918"></li>
+        <li>其实只有骨骼向量和关节点3D位置的L2-loss. 没有涉及到rigid body transformation</li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<h3 id="topic-pose-estimation--regression--ambiguity-如何消除ambiguity">topic: pose estimation / regression + ambiguity 如何消除ambiguity</h3>
+
+<ul>
+  <li>
+<strong>keyword</strong>
+    <ul>
+      <li>3d pose regression ambiguity</li>
+      <li>
+<strong><em>Explaining the Ambiguity of Object Detection and 6D Pose From Visual Data</em></strong> 被引</li>
+    </ul>
+  </li>
+</ul>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Explaining the Ambiguity of Object Detection and 6D Pose From Visual Data"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">ICCV2019</code> <strong>]</strong> <strong><a href="https://openaccess.thecvf.com/content_ICCV_2019/papers/Manhardt_Explaining_the_Ambiguity_of_Object_Detection_and_6D_Pose_From_ICCV_2019_paper.pdf">[paper]</a></strong>  <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">TUM</code>, <code class="language-plaintext highlighter-rouge">Oxford</code>, <code class="language-plaintext highlighter-rouge">Stanford</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Huawei</code>, <code class="language-plaintext highlighter-rouge">Google</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Fabian Manhardt</code>, <code class="language-plaintext highlighter-rouge">Diego Martin Arroyo</code>, <code class="language-plaintext highlighter-rouge">Christian Rupprecht</code>, <code class="language-plaintext highlighter-rouge">Benjamin Busam</code>, <code class="language-plaintext highlighter-rouge">Tolga Birdal</code>, <code class="language-plaintext highlighter-rouge">Nassir Navab</code>, <code class="language-plaintext highlighter-rouge">Federico Tombari</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">pose ambiguity</code></em> <strong>]</strong></p>
+
+<p>[]</p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <p><img src="media/image-20201102121246748.png" alt="image-20201102121246748"></p>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>3D object detection and pose estimation from a single image are two inherently ambiguous problems.</li>
+        <li>很经常的，不同viewpoints下的物体由于对称性、遮挡和重复的材质出现相似的外观</li>
+        <li>检测和pose估计中都带有的ambiguity意味着物体实例可以被几个不同的pose甚至结构不同的类别完美描述</li>
+        <li>这个工作中，我们显式地处理这些ambiguity</li>
+        <li>对于每个物体实例，我们预测多个6D pose 输出来估计 由对称性和重复材质产生的具体的pose分布<br>当视觉外观可以uniquely identifies 只有一个有效的pose时，这个分布collapses to 单个输出</li>
+        <li>优势：不仅是对pose ambiguity更好的解释，同时也在pose估计上实现了更好的精确度</li>
+      </ul>
+    </li>
+    <li><strong>ambiguity in object detection and pose estimation的正式建模表述</strong></li>
+    <li>描述刚体transformations: \(SE(3)\), 它是 \(SO(3)\)和\(\mathbb{R}^3\)的semi-direct product
+      <ul>
+        <li>对于\(\mathbb{R}^3\)，我们使用欧几里得3-vectors
+          <ul>
+            <li>对于\(SO(3)\)，用 the algebra of \(\mathbb{H}_1\) of unit quaternions 来model \(SO(3)\)中的空间旋转</li>
+            <li>a quaternion is given by
+\(\boldsymbol{q}=q_1 \boldsymbol{1}+q_2 \boldsymbol{i}+q_3 \boldsymbol{j} + q_4 \boldsymbol{k}=(q_1,q_2,q_3,q_4)\), with \((q_1,q_2,q_3,q_4) \in \mathbb{R}^3\) and \(i^2=j^2=k^2=ijk=-1\)</li>
+            <li>we regress the quaternions above the \(q_1=0\) hyperplane 并且因此忽略掉souther hemisphere，这样任何3D rotation可以被单个的quaternion表达</li>
+          </ul>
+        </li>
+        <li>在有ambiguity的情况下，a direct naive regression of the rotation as a quaternion将带来很糟糕的结果，因为网络将会学习到一个closest to all results in the symmetry group的rotation。
+  这个学出的预测可以被看做(conditional) mean rotation
+          <ul class="task-list">
+            <li>正式表述：在一个典型的有监督学习的设定下，we associate images \(I_i\) with poses \(p_i\) in a dataset \((I_i, p_i)\) ；为了描述对称性，我们定义对于一张给定的image \(I_i\), the set \(\mathcal{S}(I_i)\) of poses 都有这一张相同的image
+  \(\mathcal{S}(I_i)=\{P_J \vert I_j=I_i \}\)
+  注意对于非离散的对称性，\(\mathcal{S}\)中将含有无数个poses</li>
+            <li>直接从\(I\)回归一个pose \(p'\)的 naive model \(f(I,\theta)\)，最小化loss \(\mathcal{L}(p,p')\)来最优化
+\(\theta^*={\underset {\theta}{\operatorname {arg\,min} }} \sum_{i=1}^N \mathcal{L}(f_{\theta}(I_i), p_i)\)
+  然而，从\(I\)到\(p\)的映射is not well defined 并且不能被model为一个function</li>
+            <li>于是，\(f\)事实上学到的是和\(\mathcal{S}(I_i)\)中所有点都equally close的一个rotation.</li>
+            <li class="task-list-item">
+<input type="checkbox" class="task-list-item-checkbox" disabled>Q: multiple pose hypothesis</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>网络结构</strong>
+      <ul>
+        <li>SSD-300带一个InceptionV4的backbone，每次检测时额外提供6D pose：每个anchor box提供\(C+M \cdot P\)个输出：\(C\)代表类别个数，\(M\)代表symmetry hypotheses的个数，\(P\)代表来描述6D pose的参数个数
+  \(P=5\)，4(explicitly normalized四元数)+1(物体到camera的距离)
+  剩下的两个自由度通过把2D检测框的中心用深度back-project可以获得</li>
+        <li>
+<strong>loss</strong>
+          <ul>
+            <li>class: cross-entropy \(\mathcal{L}_{class}\)</li>
+            <li>anchor box: L1-norm \(\mathcal{L}_{fit}\)</li>
+            <li>quaternion: \(\mathcal{L}_{rotation}(q,q')=\arccos \left( 2 \langle q,q' \rangle^2-1 \right)\)
+              <ul>
+                <li>\(\iff 2\cos^{-1} \left( \lvert \langle q_1, q_2 \rangle \rvert \right)\)，等价的，只是用二倍角公式变一下而已</li>
+                <li>\(let\,\cos\beta=\langle q,q'\rangle\)
+\(2\beta=2\beta \; \Rightarrow \cos^{-1}(\cos 2\beta)=2\cos^{-1}(\cos\beta)\)
+\(\Rightarrow \cos^{-1}(2\cos^2 \beta-1)=2\cos^{-1}\beta\)
+\(\Rightarrow \cos^{-1}(2\langle q,q' \rangle^2-1)=2\cos^{-1}(\lvert \langle q,q' \rangle \rvert)\)</li>
+              </ul>
+            </li>
+            <li>depth: smooth L1-norm  \(\mathcal{L}_{depth}\)</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+
+  </article>
+
+  
+
+</div>
+
+      </div>
+    </div>
+
+    <footer>
+
+  <div class="wrapper">
+    © Copyright 2021 Jianfei Guo.
+    Powered by <a href="http://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>. Photos from <a href="https://unsplash.com" target="_blank">Unsplash</a>.
+
+    
+  </div>
+
+</footer>
+
+
+    <!-- Load jQuery -->
+<script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+
+<!-- Load Common JS -->
+<script src="https://ventusff.github.io/assets/js/common.js"></script>
+
+
+
+
+<!-- Load Anchor JS -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/anchor-js/3.2.2/anchor.min.js"></script>
+<script>
+  anchors.options.visible = 'always';
+  anchors.add('article h2, article h3, article h4, article h5, article h6');
+</script>
+
+
+
+<!-- Load fancybox -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
+<!-- Include custom icon fonts -->
+<link rel="stylesheet" href="https://ventusff.github.io/assets/css/fontawesome-all.min.css">
+<link rel="stylesheet" href="https://ventusff.github.io/assets/css/academicons.min.css">
+<link rel="stylesheet" href="https://ventusff.github.io/assets/iconfont/iconfont.css">
+
+<!-- Google Analytics -->
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-XXXXXXXXX', 'auto');
+ga('send', 'pageview');
+</script>
+
+    
+  </body>
+  
+<!-- Mermaid Js -->
+<script>
+
+    // mermaid rendering: inspired by https://stackoverflow.com/questions/53883747/how-to-make-github-pages-markdown-support-mermaid-diagram
+    // mermiad in details tag: inspired by https://gitlab.com/gitlab-org/gitlab/-/issues/28495
+    //          and by https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/assets/javascripts/behaviors/markdown/render_mermaid.js
+
+    function renderMermaids($els) {
+        if (!$els.length) return;
+
+        var config = {
+            startOnLoad: false,
+            theme: 'neutral', // forest
+            securityLevel: 'loose',
+            flowchart:{
+                    useMaxWidth:true,
+                    htmlLabels:false, // important for not squeezing blocks
+                }
+        };
+        // const theme =localStorage.getItem("theme");
+        // if(theme == "dark") config.theme = 'dark';  // currently needs to refresh to make dark mode toggle
+        mermaid.initialize(config);
+
+        $els.each((i, el) => {
+
+            // Mermaid doesn't like `<br />` tags, so collapse all like tags into `<br>`, which is parsed correctly.
+            const source = el.textContent.replace(/<br\s*\/>/g, '<br>');
+
+            // Remove any extra spans added by the backend syntax highlighting.
+            Object.assign(el, { textContent: source });
+
+            mermaid.init(undefined, el, id => {
+                const svg = document.getElementById(id);
+
+                // As of https://github.com/knsv/mermaid/commit/57b780a0d,
+                // Mermaid will make two init callbacks:one to initialize the
+                // flow charts, and another to initialize the Gannt charts.
+                // Guard against an error caused by double initialization.
+                if (svg.classList.contains('mermaid')) {
+                    console.log("return");
+                    return;
+                }
+
+                // svg.classList.add('mermaid'); //will add new bug
+
+                // pre > code > svg
+                svg.closest('pre').replaceWith(svg);
+
+                // We need to add the original source into the DOM to allow Copy-as-GFM
+                // to access it.
+                const sourceEl = document.createElement('text');
+                sourceEl.classList.add('source');
+                sourceEl.setAttribute('display', 'none');
+                sourceEl.textContent = source;
+
+                svg.appendChild(sourceEl);
+
+            });
+        });
+
+    }
+
+    const $els = $(document).find('.language-mermaid');
+    if ($els.length)
+    {
+        const visibleMermaids = $els.filter(function filter() {
+            return $(this).closest('details').length === 0 && $(this).is(':visible');
+        });
+
+        renderMermaids(visibleMermaids);
+
+        $els.closest('details').one('toggle', function toggle() {
+            if (this.open) {
+                renderMermaids($(this).find('.language-mermaid'));
+            }
+        });
+    }
+
+
+
+</script>
+
+
+  <!-- Auto config image to fancybox -->
+<script>
+    $(document).ready(function() {
+        $("article img[class!='emoji']").each(function() {
+            var currentImage = $(this);
+            currentImage.wrap("<a href='" + currentImage.attr("src") + "' data-fancybox='lightbox' data-caption='" + currentImage.attr("alt") + "'></a>");
+        });
+    });
+</script>
+
+</html>

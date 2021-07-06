@@ -1,9 +1,0 @@
-<!-- Auto config image to fancybox -->
-<script>
-    $(document).ready(function() {
-        $("article img[class!='emoji']").each(function() {
-            var currentImage = $(this);
-            currentImage.wrap("<a href='" + currentImage.attr("src") + "' data-fancybox='lightbox' data-caption='" + currentImage.attr("alt") + "'></a>");
-        });
-    });
-</script>

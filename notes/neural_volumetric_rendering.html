@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>Jianfei Guo | math and DL for implicit representations + neural volume rendering</title>
+  <meta name="description" content="Jianfei Guo. ffventus (at) gmail.com. I am a learner in representation learning and decision making. 
+">
+
+  <link rel="shortcut icon" href="https://ventusff.github.io/assets/img/favicon.ico?v=1">
+
+  <link rel="stylesheet" href="https://ventusff.github.io/assets/css/main.css">
+  <link rel="canonical" href="https://ventusff.github.io/notes/neural_volumetric_rendering">
+  
+
+    
+<!-- MathJax -->
+<script type="text/javascript">
+  window.MathJax = {
+    tex: {
+      tags: 'ams',
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ], // http://docs.mathjax.org/en/latest/input/tex/delimiters.html
+      displayMath: [['\\[','\\]'], ['$$','$$']]
+    }
+  };
+</script>
+<script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js"></script>
+<script defer src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+
+    
+<!-- Mermaid Js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/8.7.0/mermaid.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script> // this is the old version --> 
+
+  </head>
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    
+    <span class="site-title">
+        
+        <strong>Jianfei</strong> Guo
+    </span>
+    
+
+    <nav class="site-nav">
+      <input type="checkbox" id="nav-trigger" class="nav-trigger">
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewbox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"></path>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"></path>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"></path>
+            </svg>
+          </span>
+        </label>
+
+      <div class="trigger">
+        <!-- About -->
+        <a class="page-link" href="https://ventusff.github.io/">about</a>
+
+        <!-- Blog -->
+        <a class="page-link" href="https://ventusff.github.io/blog/">blog</a>
+
+        <!-- Pages -->
+        
+          
+        
+          
+        
+          
+        
+          
+            <a class="page-link" href="https://ventusff.github.io/notes/">notes</a>
+          
+        
+          
+        
+          
+        
+          
+        
+
+        <!-- CV link -->
+        <!-- <a class="page-link" href="https://ventusff.github.io/assets/pdf/CV.pdf">vitae</a> -->
+
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">math and DL for implicit representations + neural volume rendering</h1>
+    <p class="post-subtitle">隐式表征+神经体积渲染 有关的数学与DL类方法</p>
+    <p class="post-meta"></p>
+  </header>
+
+  <article class="post-content">
+    <ul id="markdown-toc">
+  <li><a href="#resources" id="markdown-toc-resources">resources</a></li>
+  <li><a href="#neural-volume-rendering" id="markdown-toc-neural-volume-rendering">Neural Volume Rendering</a></li>
+  <li><a href="#performance--timing" id="markdown-toc-performance--timing">performance / timing</a></li>
+  <li><a href="#generative--category--gan" id="markdown-toc-generative--category--gan">generative / category / GAN</a></li>
+  <li><a href="#dynamic--deform" id="markdown-toc-dynamic--deform">dynamic / deform</a></li>
+  <li><a href="#compositional" id="markdown-toc-compositional">compositional</a></li>
+  <li><a href="#encoder" id="markdown-toc-encoder">encoder</a></li>
+  <li><a href="#relighting" id="markdown-toc-relighting">relighting</a></li>
+  <li><a href="#pose-estimation" id="markdown-toc-pose-estimation">pose estimation</a></li>
+  <li><a href="#basics" id="markdown-toc-basics">basics</a></li>
+</ul>
+
+<hr>
+
+<h2 id="resources">resources</h2>
+<ul>
+  <li>
+    <p><a href="https://dellaert.github.io/NeRF/">[blog] NeRF Explosion 2020</a></p>
+  </li>
+  <li>
+    <p>对于neural volume rendering能够取得如此巨大成功(i.e. high fidelity details, easy and fast to converge)的一个possible explanation</p>
+    <ul>
+      <li>from <em>Neural Volumes: Learning Dynamic Renderable Volumes from Images</em>
+</li>
+      <li>
+        <blockquote>
+          <p>[We] propose using a volumetric representation consisting of opacity and color at each position in 3D space, where rendering is realized through integral projection. During optimization, this semi-transparent representation of geometry <u>**disperses gradient information along the ray of integration**, effectively widening the basin of convergence, enabling the discovery of good solutions</u>.</p>
+        </blockquote>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="neural-volume-rendering">Neural Volume Rendering</h2>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">ECCV2020(Oral)</code> <strong>]</strong> <strong><a href="https://www.matthewtancik.com/nerf">[web]</a></strong> <strong><a href="https://arxiv.org/pdf/2003.08934.pdf">[paper]</a></strong> <strong><a href="https://github.com/bmild/nerf">[code(tf)]</a></strong> <strong><a href="https://github.com/yenchenlin/nerf-pytorch">[code(pytorch)]</a></strong> <strong><a href="https://github.com/krrish94/nerf-pytorch">[code(pytorch)(re-implement)]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">UCB</code>, <code class="language-plaintext highlighter-rouge">UCSD</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Google</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Ben Mildenhall</code>, <code class="language-plaintext highlighter-rouge">Pratul P. Srinivasan</code>, <code class="language-plaintext highlighter-rouge">Matthew Tancik</code>, <code class="language-plaintext highlighter-rouge">Jonathan T. Barron</code>, <code class="language-plaintext highlighter-rouge">Ravi Ramamoorthi</code>, <code class="language-plaintext highlighter-rouge">Ren Ng</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">NeRF</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li><img src="media/image-20201216210148432.png" alt="image-20201216210148432"></li>
+      </ul>
+    </li>
+    <li>
+<strong>Review</strong>
+      <ul>
+        <li>颜色值由ray上的积分函数构成：
+          <ul>
+            <li>
+\[C(r)=\int_{t_n}^{t_f} T(t) \; \cdot \; \sigma(r(t)) \; \cdot \; c(r(t),d) \quad {\rm d}t\]
+              <ul>
+                <li>从near平面积分到far平面</li>
+              </ul>
+            </li>
+            <li>其中，\(T(t)=\exp(-\int_{t_n}^t \sigma(r(s))) \; {\rm d}s\)
+              <ul>
+                <li>注意，这里是从near平面开始，累积\(\sigma\)积分的负数的指数；这意味着，如果已经经过了一些\(\sigma\)值很大的值，ray后的点累积值也会很大，T(t) 值就会很小了</li>
+                <li>这里一定程度上已经cover了遮挡的情况</li>
+                <li><img src="media/image-20201216214526084.png" alt="image-20201216214526084"></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Neural Volumes: Learning Dynamic Renderable Volumes from Images"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">0000</code> <strong>]</strong> <strong>[[paper]]</strong> <strong>[[code]]</strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">University</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">company</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">xxxx</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li><strong>Motivation</strong></li>
+  </ul>
+
+</details>
+
+<h2 id="performance--timing">performance / timing</h2>
+
+<ul>
+  <li>Learned Initializations for Optimizing Coordinate-Based Neural Representations</li>
+</ul>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"DeRF: Decomposed Radiance Fields"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">CVPR2021</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2011.12490.pdf">[paper]</a></strong> <strong>[[code]]</strong> <strong><a href="https://ubc-vision.github.io/derf/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">University</code>, <code class="language-plaintext highlighter-rouge">SFU</code>, <code class="language-plaintext highlighter-rouge">University of Toronto</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Google</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Daniel Rebain</code>, <code class="language-plaintext highlighter-rouge">Wei Jiang</code>, <code class="language-plaintext highlighter-rouge">Soroosh Yazdani</code>, <code class="language-plaintext highlighter-rouge">Ke Li</code>, <code class="language-plaintext highlighter-rouge">Kwang Moo Yi</code>, <code class="language-plaintext highlighter-rouge">Andrea Tagliasacchi</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">voronoi space decomposition</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>对于NeRF这种研究，在提高网络深度、大小时，有diminishing returns（减小的回报）</li>
+        <li>因此，instead of 提高单个网络深度、大小，本篇把空间分成几个voronoi cell，对应几个NeRF，来学习
+          <ul>
+            <li>因为是空间分区的network，因此无论分多少部分，Infer时间是几乎不变的</li>
+            <li>voronoi空间分解非常合适，因为被证明与Painter’s Algorithm 兼容，可以高效GPU渲染</li>
+            <li>对于现实世界场景，在相同的渲染质量情况下，比NeRF高效3倍以上</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>Overview</strong>
+      <ul>
+        <li><img src="media/image-20201215201013772.png" alt="image-20201215201013772"></li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Neural Sparse Voxel Fields"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">NeurIPS2020</code> <strong>]</strong> <strong><a href="https://proceedings.neurips.cc/paper/2020/file/b4b758962f17808746e9bb832a6fa4b8-Paper.pdf">[paper]</a></strong> <strong><a href="https://github.com/facebookresearch/NSVF">[code]</a></strong> <strong><a href="https://lingjie0206.github.io/papers/NSVF/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">MPI</code>, <code class="language-plaintext highlighter-rouge">NUS</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Facebook</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Lingjie Liu</code>, <code class="language-plaintext highlighter-rouge">Jiatao Gu</code>, <code class="language-plaintext highlighter-rouge">Kyaw Zaw Lin</code>, <code class="language-plaintext highlighter-rouge">Tat-Seng Chua</code>, <code class="language-plaintext highlighter-rouge">Christian Theobalt</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">NeRF</code>, <code class="language-plaintext highlighter-rouge">octree voxels fields</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>review</strong>
+      <ul>
+        <li>兼顾精度、速度？</li>
+        <li>既然是利用形状/点云信息，加快query时的速度，那可否利用SDF？
+          <ul>
+            <li>这种加速，相当于额外存储一下空间中哪些位置占用低</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>现有的方法，由于网络容量/寻找和scene geometry的精确intersection有困难，目前的很多方法都是blurry results</li>
+        <li>提出一种新的表征，<strong><u>用octree结构的voxels来each 存local feature</u></strong> <br>这样在采样时就可以跳过无关的voxels，比NeRF快10倍<br><img src="media/image-20201221173251904.png" alt="image-20201221173251904">
+</li>
+        <li>至于每个pixel的feature，渲染结构与NeRF类似<br><img src="media/image-20201221174122461.png" alt="image-20201221174122461">
+</li>
+      </ul>
+    </li>
+    <li>
+<strong>Overview</strong>
+      <ul>
+        <li>self-pruning <br>把占用小于阈值的网格直接剪枝掉<br><img src="media/image-20201221174308274.png" alt="image-20201221174308274">
+</li>
+        <li>一个voxel上的feature有顶点补间得来<br><img src="media/image-20210106152320554.png" alt="image-20210106152320554">
+</li>
+      </ul>
+    </li>
+    <li>
+<strong>results</strong>
+      <ul>
+        <li><img src="media/image-20201221173910965.png" alt="image-20201221173910965"></li>
+        <li>因为用的是显式的sparse voxel 表征，可以轻松用于scene composition
+          <ul>
+            <li><img src="media/image-20201221174604849.png" alt="image-20201221174604849"></li>
+          </ul>
+        </li>
+        <li>还可以在 <code class="language-plaintext highlighter-rouge">ScanNet</code> 上直接进行尝试：首先用注册后的深度图提取点云<br><img src="media/image-20210106151555886.png" alt="image-20210106151555886">
+</li>
+        <li>还可以做scene editing：因为用的是显式的voxel
+          <ul>
+            <li><img src="media/image-20210106151644456.png" alt="image-20210106151644456"></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"AutoInt: Automatic Integration for Fast Neural Volume Rendering"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2012.01714.pdf">[paper]</a></strong>  <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Stanford</code> <strong>]</strong> <br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">David B. Lindell</code>, <code class="language-plaintext highlighter-rouge">Julien N. P. Martel</code>, <code class="language-plaintext highlighter-rouge">Gordon Wetzstein</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">AutoInt</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>初版NeRF需要离散采样数值积分，计算非常费时：millions of rays，每个ray上hundreds of forward passes，用蒙特卡洛采样来近似积分</li>
+        <li>本文用了一种快速自动积分的算法，应对这种对一个隐式神经场的积分
+          <ul>
+            <li>training: grad net来表征多视角图片</li>
+            <li>testing: integral net来迅速evaluate per-ray integrals</li>
+            <li><img src="media/image-20201216203510708.png" alt="image-20201216203510708"></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>overview</strong>
+      <ul>
+        <li>把grad network的parameters <strong>reassembled</strong> to form integral networks</li>
+        <li>用一个sampling network 预测ray上的piecewise sections的位置，用于计算定积分</li>
+        <li><img src="media/image-20201216204202712.png" alt="image-20201216204202712"></li>
+      </ul>
+    </li>
+    <li>neural volumetric rendering
+      <ul>
+        <li>automatic integration支持高效地用closed-form solution来evaluate 定积分</li>
+        <li>不过volume rendering不能直接应用AutoInt，因为包含嵌套的积分：ray上的radiance加权 <strong><u>累积transmittance</u></strong> 以后的积分</li>
+        <li>因此，把这个积分近似为piecewise sections来用AutoInt高效地积分</li>
+        <li>将
+          <ul>
+            <li>
+\[\boldsymbol{\rm C}(\boldsymbol{\rm r})=\int_{t_n}^{t_f} T(t) \; \cdot \; \sigma(\boldsymbol{\rm r}(t)) \; \cdot \; c(\boldsymbol{\rm r}(t),\boldsymbol{\rm d}) \quad {\rm d}t\]
+            </li>
+            <li>
+\[T(t)=\exp(-\int_{t_n}^t \sigma(\boldsymbol{\rm r}(s))) \; {\rm d}s\]
+            </li>
+          </ul>
+        </li>
+        <li>近似为
+          <ul>
+            <li>
+\[\tilde{\boldsymbol{\rm C}}(\boldsymbol{\rm r})=\sum_{i=1}^N \overline{\sigma}_i \overline{\boldsymbol{\rm c}}_i \overline{T}_i, \qquad \overline{T}_i=\exp(-\sum_{j=1}^{i-1}\overline{\sigma}_j)\]
+            </li>
+            <li>其中\(\overline{\sigma}_i=\delta_i^{-1}\int_{t_i-1}^{t_i}\sigma(t)\;{\rm d}t, \qquad \overline{\boldsymbol{\rm c}}_i = \delta_i^{-1} \int_{t_i-1}^{t_i}\boldsymbol{\rm c}(t)\;{\rm d}t\)
+              <ul>
+                <li>每段的\(\overline{\sigma}_i\)由这段上的\(\sigma(t)\)积分求出，每段的\(\overline{\boldsymbol{\rm c}}_i\)由这段上的\(\boldsymbol{\rm c}(t)\)积分求出
+                  <ul>
+                    <li>这里用AutoInt近似</li>
+                  </ul>
+                </li>
+                <li>解释\(\overline{T}_i=\exp(-\sum_{j=1}^{i-1}\overline{\sigma}_j)\)：每段的累积transimittance\(T(t)\)则由这段之前的那些段的累加\(\overline{\sigma}_i\)的负指数幂近似
+                  <ul>
+                    <li>这里是真正的数值近似，把一段上的所有T(t)都用这段起始的T(t)近似</li>
+                    <li><img src="media/image-20201216214526084.png" alt="image-20201216214526084"></li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>由于目前的autoint是两阶段的，训练很慢；本篇用了一个pytorch custom implementation of AutoDiff</li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"NeRF++: Analyzing and Improving Neural Radiance Fields</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2010.07492.pdf">[paper]</a></strong> <strong><a href="https://github.com/Kai-46/nerfplusplus">[code]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Cornell Tech</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Intel</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Kai Zhang</code>, <code class="language-plaintext highlighter-rouge">Gernot Riegler</code>, <code class="language-plaintext highlighter-rouge">Noah Snavely</code>, <code class="language-plaintext highlighter-rouge">Vladlen Koltun</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <table>
+    <thead>
+      <tr>
+        <th><img src="media/nerf++_truck.gif" alt="nerf++_truck"></th>
+        <th><img src="media/nerf++_playground.gif" alt="nerf++_playground"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td> </td>
+        <td> </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>面对unbounded scenes时，用一种球内 / 球外\(\frac {1}{r}\)的参数化来更好的处理foreground / background</li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<h2 id="generative--category--gan">generative / category / GAN</h2>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"GRAF: Generative Radiance Fields for 3D-Aware Image Synthesis"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">NeurIPS2020</code> <strong>]</strong> <strong><a href="http://www.cvlibs.net/publications/Schwarz2020NEURIPS.pdf">[paper]</a></strong> <strong><a href="http://www.cvlibs.net/publications/Schwarz2020NEURIPS_supplementary.pdf">[supp]</a></strong> <strong><a href="https://github.com/autonomousvision/graf">[code]</a></strong> <strong><a href="https://autonomousvision.github.io/graf/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">MPI</code> <strong>]</strong> <br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Katja Schwarz</code>, <code class="language-plaintext highlighter-rouge">Yiyi Liao</code>, <code class="language-plaintext highlighter-rouge">Michael Niemeyer</code>, <code class="language-plaintext highlighter-rouge">Andreas Geiger</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<em><strong>Motivation</strong></em>
+      <ul>
+        <li><img src="media/58379603.png" alt="img"></li>
+        <li>
+          <blockquote>
+            <p>While 2D generative adversarial networks have enabled high-resolution image synthesis, they largely lack an understanding of the 3D world and the image formation process.</p>
+
+            <p>Thus, they do not provide precise control over camera viewpoint or object pose.</p>
+
+            <p><strong>因为2D GAN缺少对3D世界的理解；缺少图像生成过程的理解，所以不能提供对于camera viewpoint和物体pose的精确控制</strong>。</p>
+          </blockquote>
+        </li>
+        <li>使用连续表征neural radiance filed
+          <ul>
+            <li>从location x, view direction d映射到color c 和 体素密度\(\sigma\)</li>
+          </ul>
+        </li>
+        <li>数据集使用unposed RGB images</li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"pi-GAN: Periodic Implicit Generative Adversarial Networks for 3D-Aware Image Synthesis"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://marcoamonteiro.github.io/pi-GAN-website/pdf/compressed_paper.pdf">[paper(compressed)]</a></strong> <strong><a href="https://arxiv.org/pdf/2012.00926.pdf">[paper]</a></strong> <strong>[[code]]</strong> <strong><a href="https://github.com/lucidrains/pi-GAN-pytorch">[code-nonofficial]</a></strong> <strong><a href="https://marcoamonteiro.github.io/pi-GAN-website/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Stanford</code> <strong>]</strong> <br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Eric R. Chan</code>, <code class="language-plaintext highlighter-rouge">Marco Monteiro</code>, <code class="language-plaintext highlighter-rouge">Petr Kellnhofer</code>, <code class="language-plaintext highlighter-rouge">Jiajun Wu</code>, <code class="language-plaintext highlighter-rouge">Gordon Wetzstein</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">SIREN-style</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+      <p><strong>Review</strong></p>
+
+      <ul>
+        <li>主要对标、高度对标 GRAF</li>
+      </ul>
+    </li>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>StyleGAN类似的noise输入方式（<code class="language-plaintext highlighter-rouge">mapping network</code>） + SIREN的周期性激活函数（<code class="language-plaintext highlighter-rouge">sinusoidal activation</code>）</li>
+        <li><img src="media/image-20201223163530375.png" alt="image-20201223163530375"></li>
+      </ul>
+    </li>
+    <li>
+<strong>Losses</strong>
+      <ul>
+        <li>discriminator
+          <ul>
+            <li>simple ProgressiveGA-like convolutional discriminator;</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>Main contributions</strong> 主要技术贡献
+      <ul>
+        <li>
+<strong><code class="language-plaintext highlighter-rouge">FiLM</code></strong>：另外一种input noise使用方式： <code class="language-plaintext highlighter-rouge">feature-wise linear modulation</code>
+          <ul>
+            <li>就是首先把 latent 通过mapping变成 \(\gamma\)和\(\beta\)，然后施加到SIREN的激活函数处<br><img src="media/image-20210311140654298.png" alt="image-20210311140654298" style="zoom: 67%;">
+</li>
+            <li>过去的ReLU-based 方法，一般使用concat来condition input noise</li>
+            <li>作者观察到，对于 <code class="language-plaintext highlighter-rouge">SIREN</code> 这种周期性的激活函数来说，<code class="language-plaintext highlighter-rouge">condition-by-concatenation</code> 是 sub-optimal的</li>
+            <li>作者提出，使用 mapping network 进行 <code class="language-plaintext highlighter-rouge">feature-wise linear modulation</code> 来 condition <code class="language-plaintext highlighter-rouge">SIREN</code> 中的那些Layer
+              <ul>
+                <li>[47] <em>arXiv 2017, Film: Visual reasoning with a general conditioning layer.</em>
+</li>
+                <li>[8] <em>Distlll 2018</em>, Feature-wise transformations. <a href="https://distill.pub/2018/feature-wise-transformations">[link]</a>
+</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>
+<strong>progressive training</strong>
+          <ul>
+            <li>遵循progressiveGAN的方式</li>
+            <li>先在 低分辨率、大batch size训练，让generator专注于生成 coarse shapes；</li>
+            <li>然后逐渐增加图像分辨率、给dis添加新层、来辨别fine details</li>
+            <li>32x32 -&gt; 64x64 -&gt; 128x128</li>
+            <li>实践中发现，这样的 progressive growing的策略可以在刚开始训练时allow for更大的batch size、allow for higher throuput in images per iteration，对于稳定训练、提速训练有帮助，helped ensure quality and diversity
+              <ul>
+                <li>[23] <em>ICLR2018, Progressive growing of GANs for improved quality, stability,</em>
+<em>and variation.</em>
+</li>
+              </ul>
+            </li>
+            <li>不需要像progressiveGAN那样增长generator的结构，对于nerf-based生成器，只需要progressively增加采样射线的分辨率即可</li>
+            <li><img src="media/image-20210310141914872.png" alt="image-20210310141914872"></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>Results</strong>
+      <ul>
+        <li><img src="media/image-20201223163713693.png" alt="image-20201223163713693"></li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<h2 id="dynamic--deform">dynamic / deform</h2>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">(nerfies, D-NeRF) "Deformable Neural Radiance Fields"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">CVPR2021</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2011.12948.pdf">[paper]</a></strong> <strong><a href="https://github.com/google/nerfies">[code]</a></strong> <strong><a href="https://nerfies.github.io/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">University of Washington</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Google</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Keunhong Park</code>, <code class="language-plaintext highlighter-rouge">Utkarsh Sinha</code>, <code class="language-plaintext highlighter-rouge">Jonathan T. Barron</code>, <code class="language-plaintext highlighter-rouge">Sofien Bouaziz</code>, <code class="language-plaintext highlighter-rouge">Dan B Goldman</code>, <code class="language-plaintext highlighter-rouge">Steven M. Seitz</code>, <code class="language-plaintext highlighter-rouge">Ricardo Martin-Brualla</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">deformable NeRF</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>为NeRF采集的图片中的物体可以变形</li>
+      </ul>
+    </li>
+    <li>
+<strong>Overview</strong>
+      <ul>
+        <li>首先从observation space加上一个变形latent code映射到canonical space，然后再canonical space下进行NeRF的操作</li>
+        <li>这样通过变形latent code就可以捕捉到物体的变形<br><img src="media/image-20201221094736917.png" alt="image-20201221094736917">
+</li>
+      </ul>
+    </li>
+    <li>Elastic Regularization 弹性正则化
+      <ul>
+        <li>由于deformation field 引入了额外的ambiguities，导致<code class="language-plaintext highlighter-rouge">under-constrained optimization</code>欠约束最优化问题，带来不好的结果和artifacts<br>需要引入先验</li>
+        <li><img src="media/image-20201221095628241.png" alt="image-20201221095628241"></li>
+        <li>在几何处理和图形学仿真领域，建模非刚体变形时，常常使用弹性能量<code class="language-plaintext highlighter-rouge">elastic enegies</code> 来建模local deformations from a rigid motion；在视觉领域也有利用<code class="language-plaintext highlighter-rouge">elastic energy</code>来重建、tracking非刚体的场景和物体；因此使用类似概念</li>
+        <li>对本篇的deformation field T来说，一个点\(\boldsymbol{\rm x}\)处的mapping(从observation frame到canonical frame)的<code class="language-plaintext highlighter-rouge">Jacobian</code> \(\boldsymbol{\rm J}_T(\boldsymbol{\rm x})\)描述了这个点处的mapping的<code class="language-plaintext highlighter-rouge">best linear approximation</code>
+</li>
+        <li>
+\[L_{\text{elastic}} = \| \log \boldsymbol{\Sigma} - \log \boldsymbol{\rm I} \|_F^2=\|\log \boldsymbol{\Sigma}\|_F^2\]
+          <ul>
+            <li>其中，考虑把\(\boldsymbol{\rm J}_T\)进行<code class="language-plaintext highlighter-rouge">singular value decomposition</code> <a href="https://en.wikipedia.org/wiki/Singular_value_decomposition">奇异值分解</a>：\(\boldsymbol{\rm J}_T=\boldsymbol{\rm U}\boldsymbol{\rm \Sigma}\boldsymbol{\rm V}^T\)</li>
+            <li>则\(\boldsymbol{\Sigma}\)即为变形的主拉伸；</li>
+            <li>选择\(\log{\boldsymbol{\Sigma}}\)矩阵对数是因为对于相同比例的 <code class="language-plaintext highlighter-rouge">contraction</code>和 <code class="language-plaintext highlighter-rouge">expansion</code> 有相同的weight</li>
+            <li>这里就是惩罚变形的拉伸部分、非刚性形变部分，鼓励局部是刚性形变</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"D-NeRF: Neural Radiance Fields for Dynamic Scenes"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2011.13961.pdf">[paper]</a></strong> <strong>[[code]]</strong> <strong><a href="https://www.albertpumarola.com/research/D-NeRF/index.html">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">University</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">company</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Albert Pumarola</code>, <code class="language-plaintext highlighter-rouge">Enric Corona</code>, <code class="language-plaintext highlighter-rouge">Gerard Pons-Moll</code>, <code class="language-plaintext highlighter-rouge">Francesc Moreno-Noguer</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li><strong>Motivation</strong></li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;NSFF&gt;"Neural Scene Flow Fields for Space-Time View Synthesis of Dynamic Scenes"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">CVPR2021</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2011.13084">[paper]</a></strong> <strong><a href="http://www.cs.cornell.edu/~zl548/NSFF/NSFF_supp.pdf">[supp]</a></strong> <strong><a href="https://github.com/zhengqili/Neural-Scene-Flow-Fields">[code]</a></strong> <strong><a href="http://www.cs.cornell.edu/~zl548/NSFF/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Cornell Tech</code>,  <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Adobe</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Zhengqi Li</code>, <code class="language-plaintext highlighter-rouge">Simon Niklaus</code>, <code class="language-plaintext highlighter-rouge">Noah Snavely</code>, <code class="language-plaintext highlighter-rouge">Oliver Wang</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li><strong>Motivation</strong></li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;video-nerf&gt;"Space-time Neural Irradiance Fields for Free-Viewpoint Video"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2011.12950.pdf">[paper]</a></strong> <strong>[[code]]</strong> <strong><a href="https://video-nerf.github.io/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Cornell Tech</code>, <code class="language-plaintext highlighter-rouge">Virginia Tech</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Facebook</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Wenqi Xian</code>, <code class="language-plaintext highlighter-rouge">Jia-Bin Huang</code>, <code class="language-plaintext highlighter-rouge">Johannes Kopf</code>, <code class="language-plaintext highlighter-rouge">Changil Kim</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li><strong>Motivation</strong></li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;nerflow&gt;"Neural Radiance Flow for 4D View Synthesis and Video Processing"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2012.09790.pdf">[paper]</a></strong> <strong>[[code]]</strong> <strong><a href="https://yilundu.github.io/nerflow/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">MIT</code>, <code class="language-plaintext highlighter-rouge">Stanford</code> <strong>]</strong> <br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Yilun Du</code>, <code class="language-plaintext highlighter-rouge">Yinan Zhang</code>, <code class="language-plaintext highlighter-rouge">Hong-Xing Yu</code>, <code class="language-plaintext highlighter-rouge">Joshua B. Tenenbaum</code>, <code class="language-plaintext highlighter-rouge">Jiajun Wu</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li><strong>Motivation</strong></li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;NR-NeRF&gt; "Non-Rigid Neural Radiance Fields: Reconstruction and Novel View Synthesis of a Deforming Scene from Monocular Video"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2012.12247.pdf">[paper]</a></strong> <strong><a href="https://github.com/facebookresearch/nonrigid_nerf">[code]</a></strong> <strong><a href="https://gvv.mpi-inf.mpg.de/projects/nonrigid_nerf/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">MPI</code><strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Facebook</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Edgar Tretschk</code>, <code class="language-plaintext highlighter-rouge">Ayush Tewari</code>, <code class="language-plaintext highlighter-rouge">Vladislav Golyanik</code>, <code class="language-plaintext highlighter-rouge">Michael Zollhöfer</code>, <code class="language-plaintext highlighter-rouge">Christoph Lassner</code>, <code class="language-plaintext highlighter-rouge">Christian Theobalt</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">rigidity score</code>, <code class="language-plaintext highlighter-rouge">divergence loss</code>, <code class="language-plaintext highlighter-rouge">dynamic/deforming scenes decoupling</code>, <code class="language-plaintext highlighter-rouge">canonical NeRF volume</code>, <code class="language-plaintext highlighter-rouge">spatial deformation</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>贡献/结论：
+      <ul>
+        <li>消费者级的相机就足够合成简单、短时场景的让人信服的bullet-time videos ；单目视频的free viewpoint rendering，将场景解耦为静态表征和变形</li>
+        <li>表征允许视野、时间之间的相关性估计</li>
+        <li>提供场景中每个点的<code class="language-plaintext highlighter-rouge">rigidity score</code>刚性评分；一个rigidity network来吧场景分为非刚体前景和刚体背景，没有直接监督信号；是一种空间场中的连续加权和，不是显著的离散划分</li>
+      </ul>
+    </li>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>用非刚体（<strong>可形变的</strong>）<strong>nerf</strong>来表征一个包含<strong>动态可变物体</strong>的<strong>视频</strong><br>通过ray bending来重建一个一般的非刚体场景的NeRF</li>
+        <li>输入一张正在变形的物体的RGB图片，学到它的<strong>几何</strong>和<strong>外观</strong>表征，并且可以重建任何timestep下的novel camera view下的物体图片</li>
+        <li>task：<code class="language-plaintext highlighter-rouge">free viewpoint rendering</code>自由视野渲染，针对<code class="language-plaintext highlighter-rouge">dynamic scenes</code>动态场景（随时间变化的场景）
+          <ul>
+            <li>过去需要多视角的captures，但是这样的多视角方案是昂贵的、繁琐的</li>
+            <li>希望用户只用消费者级的相机，monocular</li>
+            <li>方法不仅适用于现在拍的视频，还适用于过去久远以前拍的视频，制造<code class="language-plaintext highlighter-rouge">immersive</code>更有沉浸感的体验</li>
+          </ul>
+        </li>
+        <li>
+<code class="language-plaintext highlighter-rouge">monocular video for dynamic/deforming scenes</code>是一个严重<code class="language-plaintext highlighter-rouge">under-constrained</code>欠约束问题
+          <ul>
+            <li>过去的方法限制在单物体类别，如人体</li>
+            <li>过去的方法只重建非刚性物体的<code class="language-plaintext highlighter-rouge">geometry</code>形状/几何，不关注外观</li>
+          </ul>
+        </li>
+        <li><img src="media/nr-nerf-example.gif" alt="nr-nerf-example"></li>
+      </ul>
+    </li>
+    <li>
+<strong>overview</strong>
+      <ul>
+        <li><img src="media/image-20210114085225599.png" alt="image-20210114085225599"></li>
+        <li>并没有显式的cover时间信息</li>
+        <li>把非刚体场景表征为两个components的组合，并且在观测上一起训练；整个方法都是自监督/无监督的
+          <ul>
+            <li>一个canonical NeRF volume，表达几何与外观
+              <ul>
+                <li>没有直接supervised，是场景的static表征</li>
+              </ul>
+            </li>
+            <li>场景的变形
+              <ul>
+                <li>使用估计的场景变形把canonical NeRF volume变形到每张图片</li>
+                <li>
+<img class="emoji" title=":pushpin:" alt=":pushpin:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f4cc.png" height="20" width="20"> 由于场景的<strong><code class="language-plaintext highlighter-rouge">vometric nature</code></strong>，本篇选择的是<code class="language-plaintext highlighter-rouge">space deformations</code>，而不是mesh-based的方法的<code class="language-plaintext highlighter-rouge">surface deformations</code>表面变形
+                  <ul>
+                    <li>变形的是entire space，和camera view无关；因此可以做novel view synthesis</li>
+                  </ul>
+                </li>
+                <li>
+<img class="emoji" title=":pushpin:" alt=":pushpin:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f4cc.png" height="20" width="20"> 场景变形表征为ray bending；是互补的路线，instead of 从canonical volume变形到直线camera ray上，本篇是从camera ray上的点变形到canonical volume中
+                  <ul>
+                    <li>笔者评价：前面两点和DIF, DIT两篇论文的设定都十分类似</li>
+                    <li>ray bending 用MLP参数化
+                      <ul>
+                        <li>输入射线上的点坐标；输入<strong>每张图片(per-time-step)</strong>的一个latent code</li>
+                        <li>变形code是每帧一个code</li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+                <li>从视频场景的几何中解耦变形是一种under-constrained问题；
+                  <ul>
+                    <li>在canonical volume中的每一个点分配一个刚性评分；使得变形不影响场景的静态区域
+                      <ul>
+                        <li>这个同样也是联合训练，没有直接监督信号</li>
+                      </ul>
+                    </li>
+                    <li>引入sparsity regularizer作为软约束
+                      <ul>
+                        <li>加权了；主要鼓励在visible, occupied regions的sparsity</li>
+                      </ul>
+                    </li>
+                    <li>引入local shape preserving regularizer，试图保留变形场景的局部volume，通过最小化变形的<code class="language-plaintext highlighter-rouge">divergence</code>散度
+                      <ul>
+                        <li>加权了；hidden regions则被散度正则化约束</li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>NeRF：去掉了view-depend 效应的NeRF</li>
+      </ul>
+    </li>
+    <li>
+<strong>deformation model 变形的模型</strong>：ray bending / space warping
+      <ul>
+        <li>回归空间中一点在变形code condition下的offset：即，是<code class="language-plaintext highlighter-rouge">displacement vector field</code>估计的是位移向量场函数
+          <ul>
+            <li>\((c,o)=v(x+b(x,l_i))\)，其中\(b(x,l_i)\)是变形后的在canonical space下的坐标，\(l_i\)是变形code，\(v\)是canonical NeRF函数</li>
+            <li>把每条直线\(\overline{r}\)变形后的版本表示为\(\tilde{\rm r}_{l_i}(j)=\overline{\rm r}(j)+b(\overline{\rm r}(j), l_i)\)</li>
+          </ul>
+        </li>
+        <li>
+<code class="language-plaintext highlighter-rouge">rigidity network</code> 刚性网络
+          <ul>
+            <li>实践中发现场景的刚性部分没有被充足地约束；</li>
+            <li>将\(b(x,l_i)\)表达为一个raw offset + rigidity mask：\(b(x,l_i)=r(x)b'(x,l_i)\)</li>
+            <li>想要防止在场景中的刚性区域也变形，因此这些地方刚性mask \(r(x)=0\)，而在非刚性区域\(r(x)\gt 0\)</li>
+            <li>这使得b能够更专注于场景中的非刚性区域</li>
+            <li>
+<img class="emoji" title=":pushpin:" alt=":pushpin:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f4cc.png" height="20" width="20">笔者评价：
+              <ul>
+                <li>这里的思路和DIF论文中的位置改变函数和标量场改变函数有些类似；整个场景并不都有变形，在DIF中的情况是物体有时候会有<code class="language-plaintext highlighter-rouge">structure discrepancy</code>在结构上的不同、无法用变形建模，而在本篇中的情况是整个空间区域中只有一部分是非刚体；</li>
+                <li>思路都是类似的，instead of 直接对整个场景变形，多用一个量来反馈一些其他的非变形的信息</li>
+              </ul>
+            </li>
+            <li>这个rigidity network同canonical nerf、变形code变形网络一起，都是jointly learned</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>losses</strong>
+      <ul>
+        <li>考虑单个时间步 \(i\) ，单条直线ray \(\overline{\rm r}\) <br>射线上在<u>均匀采样</u>的\(j \in [j_n, j_f]\)处的<code class="language-plaintext highlighter-rouge">coarse ray points</code> \(\overline{C}=\{ \overline{\rm r}(j) \}_{j\in C}\)<br>射线上在<code class="language-plaintext highlighter-rouge">importance sampling</code><u>重要度采样</u>的 \(j\) 处的<code class="language-plaintext highlighter-rouge">fine ray points</code> \(\overline{F}=\{\overline{\rm r}(j) \}_{j \in F}\) <br>对于一个隐变形code \(l\)，弯曲后的射线 \(\tilde{\rm r}_l\) 给出 \(\tilde{C}=\{ \tilde{\rm r}(j) \}_{j \in C}\) 与 \(\tilde{F}=\{\tilde{\rm r}(j) \}_{j \in F}\)
+          <ul>
+            <li>
+<img class="emoji" title=":pushpin:" alt=":pushpin:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f4cc.png" height="20" width="20"> 既用均匀采样的coarse points，也用重要度采样的fine points</li>
+          </ul>
+        </li>
+        <li>
+<strong>reconstruction loss</strong> 重建loss
+          <ul>
+            <li>
+\[L_{data}=\lVert c_{c}(\tilde{C}) - \hat{c}({\rm r}) \rVert_2^2 + \lVert c_f(\tilde{C} \cup \tilde{F}) - \hat{c}({\rm r}) \rVert_2^2\]
+              <ul>
+                <li>其中 \(\hat{c}({\rm r})\)是颜色真值</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>
+<strong>offset loss</strong> 通过sparsity loss约束变形的Offset：希望Offset场在空间中是稀疏的
+          <ul>
+            <li>希望空气是<code class="language-plaintext highlighter-rouge">compressible</code>可压缩的、不阻碍最优化过程，对每个点用其<code class="language-plaintext highlighter-rouge">occupancy</code>占用度加权</li>
+            <li>然而，这还是会对hidden ray points加很大的权；导致渲染novel views时存在严重的artifacts；因此额外用<code class="language-plaintext highlighter-rouge">visibility</code>可见性加权</li>
+            <li>
+\[L_{offsets}=\frac{1}{\lvert C \rvert} \underset{j\in C}{\sum}w_j \cdot \left(   \Vert b'(\overline{\rm r}(j),l) \rVert_2 \; + \; \omega_{\rm rigidity}r(\overline{\rm r}(j)) \right)\]
+              <ul>
+                <li>注意，罗马体的 \(\rm r\) 代表射线，\(\overline{\rm r}(j)\)是直线ray上的一点，斜体的 \(r\) 代表rigidity network</li>
+                <li>每个点都用visibility、occupancy加权：\(w_j=V(j) \cdot o(\tilde{\rm r}(j))\)；<img class="emoji" title=":warning:" alt=":warning:" src="https://github.githubassets.com/images/icons/emoji/unicode/26a0.png" height="20" width="20">并不会对\(w_j\)反向传播</li>
+                <li>这个Loss有两个优势：
+                  <ul>
+                    <li>梯度和offset的大小无关，或大或小的offsets/motions被同等对待；不像L2 loss那样
+                      <ul class="task-list">
+                        <li class="task-list-item">
+<input type="checkbox" class="task-list-item-checkbox" disabled checked>Q: what?
+                          <ul>
+                            <li>A: 代码中是 <code class="language-plaintext highlighter-rouge">torch.norm(offsets, dim=-1)</code>；<br>即<code class="language-plaintext highlighter-rouge">Frobenius Norm</code>(matrix) / <code class="language-plaintext highlighter-rouge">L2-norm</code>(vector)；<br>\(\lVert \boldsymbol{\rm A} \rVert_{F}=\sqrt{\sum_{i=1}^m \sum_{j=1}^n \lvert a_{ij} \rvert^2}\)   or   \(\left(\sum_{k=1}^n x_k^2 \right)^{1/2}\)<br>L2-norm的梯度为：\(\nabla \|x\| = \frac{x}{\|x\|}\)；梯度大小和x向量的模大小无关</li>
+                            <li>A: 而L2-loss是 \(\text{loss}=\sum_{k=1}^n x_k^2\)</li>
+                          </ul>
+                        </li>
+                      </ul>
+                    </li>
+                    <li>作用相当于一个L2 loss，它鼓励的是offsets field中的稀疏性，适应本篇提到的场景</li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>
+<strong>divergence loss</strong> 散度loss
+          <ul>
+            <li>offsets loss只约束可见区域，因此引入一个额外的散度正则化来约束<code class="language-plaintext highlighter-rouge">hidden</code>不可见区域</li>
+            <li>inpired by: CG领域中local, <code class="language-plaintext highlighter-rouge">isometric</code>等距/等测度 的形状保留方法，比如对表面的as-rigid-as-possible正则化或者volume preservation方法，<strong>本篇寻求在变形后仍然保留局部的shape</strong>
+</li>
+            <li>
+<a href="https://en.wikipedia.org/wiki/Helmholtz_decomposition"><code class="language-plaintext highlighter-rouge">Helmholtz decomposition</code>亥姆霍兹分解</a> 可以把任何二阶可微分的向量场分解为 一个没有旋转(无旋度)的向量场 和 没有散度的向量场的加和；
+              <ul class="task-list">
+                <li class="task-list-item">
+<input type="checkbox" class="task-list-item-checkbox" disabled checked>Q: what?</li>
+              </ul>
+            </li>
+            <li>因此，通过惩罚散度，就可以鼓励向量场尽可能主要由平动和旋转和构成，有效地保留volume</li>
+            <li>
+\[L_{divergence}=\frac{1}{\lvert C \rvert} \underset{j\in C}{\sum} w'_j \cdot \lvert {\rm div}(b(\overline{\rm r}(j), l)) \rvert\]
+              <ul>
+                <li>其中 \(w'_j=o(\tilde{\rm r}(j))\) 不被反向传播，\(\rm div\) 代表 \(b\) 相对于位置 \(\overline{\rm r}(j)\) 处的散度</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>
+<strong>view dependence</strong>
+          <ul>
+            <li>如果要考虑对 view 方向的依赖性的话，需要考虑 view 方向的变形</li>
+            <li>有两种计算方法：
+              <ul>
+                <li>slower and exact
+                  <ul>
+                    <li>
+\[\nabla_j \tilde{\rm r}(j)=\frac{\partial \tilde{\rm r}(j)}{\partial \overline{\rm r}(j)} \cdot \frac{\partial \overline{\rm r}(j)}{\partial j} = J \cdot d\]
+                    </li>
+                    <li>其中\(J\)是\(3 \times 3\)的雅克比矩阵，\(d\)是直线射线的方向</li>
+                    <li>通过3个方向传播来计算\(J\)，比较耗时</li>
+                  </ul>
+                </li>
+                <li>faster and approximate
+                  <ul>
+                    <li>通过有限差分来近似弯曲后的ray的方向</li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>results</strong>
+      <ul>
+        <li><img src="media/image-20210114104442878.png" alt="image-20210114104442878"></li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<h2 id="compositional">compositional</h2>
+
+<hr>
+
+<p><img class="emoji" title=":pushpin:" alt=":pushpin:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f4cc.png" height="20" width="20"><strong><code class="language-plaintext highlighter-rouge">"GIRAFFE: Representing Scenes as Compositional Generative Neural Feature Fields"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2011.12100">[paper]</a></strong> <strong>[[code]]</strong> <strong>[[web]]</strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">MPI</code>, <code class="language-plaintext highlighter-rouge">University of Tübingen</code> <strong>]</strong> <br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Michael Niemeyer</code>, <code class="language-plaintext highlighter-rouge">Andreas Geiger</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>review</strong>
+      <ul>
+        <li>用neural rendering “避开”了多物体lighting的显式建模</li>
+      </ul>
+    </li>
+    <li><strong>Motivation</strong></li>
+    <li>
+<strong>overview</strong>
+      <ul>
+        <li><img src="media/image-20210111204452418.png" alt="image-20210111204452418"></li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;OSF&gt;"Object-Centric Neural Scene Rendering"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2012.08503.pdf">[paper]</a></strong> <strong>[[code]]</strong> <strong><a href="https://shellguo.com/osf/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Stanford</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Google</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Michelle Guo</code>, <code class="language-plaintext highlighter-rouge">Alireza Fathi</code>, <code class="language-plaintext highlighter-rouge">Jiajun Wu</code>, <code class="language-plaintext highlighter-rouge">Thomas Funkhouser</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">object-centric neural scattering functions</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>review</strong>
+      <ul>
+        <li>相比于组成式，其实更关注多物体之间的Lighting</li>
+        <li>物体pose都是真值</li>
+      </ul>
+    </li>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li><img src="media/image-20201221161533104.png" alt="image-20201221161533104"></li>
+        <li>
+<strong>OSF</strong>(object-centric neural scattering functions) models per-object light transport</li>
+        <li>modeling dynamic scene：物体在移动/有无，光源在移动</li>
+      </ul>
+    </li>
+    <li>
+<strong>Review</strong>
+      <ul>
+        <li>相比于GIRAFFE，把多物体的光照、反射等处理地很好了；GIRAFFE是用neural rendering逃避了显式地建模光照和多物体透射反射，这篇文章直面难题，类似Neural Reflectance Field</li>
+        <li>看上去物体位置、id都是真值，重点主要是建模好多物体的光照</li>
+      </ul>
+    </li>
+    <li>
+<strong>Overview</strong>
+      <ul>
+        <li>数据集
+          <ul>
+            <li>furniture-single</li>
+            <li>furniture-random 25个动态的场景，每个包含多个物体的随机layout</li>
+            <li>furniture-realisitc</li>
+          </ul>
+        </li>
+        <li><img src="media/image-20201221162223704.png" alt="image-20201221162223704"></li>
+        <li><img src="media/image-20201221162251641.png" alt="image-20201221162251641"></li>
+        <li><img src="media/image-20201221162336799.png" alt="image-20201221162336799"></li>
+      </ul>
+    </li>
+    <li>
+<img class="emoji" title=":pushpin:" alt=":pushpin:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f4cc.png" height="20" width="20"> <strong>Ray Sampling</strong>
+      <ul>
+        <li><img src="media/image-20210121170540533.png" alt="image-20210121170540533"></li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Neural Scene Graphs for Dynamic Scenes"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">CVPR2021</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2011.10379.pdf">[paper]</a></strong> <strong><a href="https://light.cs.princeton.edu/wp-content/uploads/2021/02/NeuralSceneGraphs_Supplement.pdf">[supp]</a></strong> <strong>[[code]]</strong> <strong><a href="https://light.princeton.edu/publication/neural-scene-graphs/">[web]</a></strong>  <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">TUM</code>, <code class="language-plaintext highlighter-rouge">Princeton University</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Algolux</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Julian Ost</code>, <code class="language-plaintext highlighter-rouge">Fahim Mannan</code>, <code class="language-plaintext highlighter-rouge">Nils Thuerey</code>, <code class="language-plaintext highlighter-rouge">Julian Knodt</code>, <code class="language-plaintext highlighter-rouge">Felix Heide</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">dynamic scenes</code>, <code class="language-plaintext highlighter-rouge">motion-clue</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>主要是为了model dynamic scenes；graph是显式的graph</li>
+        <li>虽然是compositional的工作，但是是用到了motion clue的那种</li>
+        <li><img src="media/image-20201221165737154.png" alt="image-20201221165737154"></li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<h2 id="encoder">encoder</h2>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"GRF: LEARNING A GENERAL RADIANCE FIELD FOR 3D SCENE REPRESENTATION AND RENDERING"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">ICLR2021</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2010.04595.pdf">[paper]</a></strong> <strong><a href="https://github.com/alextrevithick/GRF">[code]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Oxford</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">company</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Alex Trevithick</code>, <code class="language-plaintext highlighter-rouge">Bo Yang</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">encoder-decoder</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>NeRF + encoder-decoder结构</li>
+        <li>用一个 <strong><u>single forward pass</u></strong> infer出novel scene representations
+          <ul>
+            <li>encoder输入：2D images + camera poses + intrinsics</li>
+            <li>encoder输出：neural radiance fieilds</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>主要做法
+      <ul>
+        <li>为每一个light ray (pixel) 提取general features</li>
+        <li>把features重投影到query 3D point p上</li>
+        <li>然后从p的feature infer出RGB和volume density</li>
+        <li>
+<strong>关键在于</strong>：对于任意同一个点，从不同的角度看来的feature是始终一样的，因此不同view的这个点渲染出的RGB和volume density也会保持一致<img src="media/image-20201202175634941.png" alt="image-20201202175634941">
+</li>
+      </ul>
+    </li>
+    <li>构成：四个部件，连接起来，端到端的训练
+      <ul>
+        <li>对每一个2D pixel的feature extractor</li>
+        <li>一个reprojector，从2D feature到3D空间
+          <ul>
+            <li>做了一个简单的假设：<u>一个像素的feature，是对这个ray上的每一个点的描述</u>
+</li>
+            <li>所以就是把一个query 3D point重投影到每一个输入view上，来从每一个输入view对应点的2D feature得到这个3D point的feature</li>
+            <li>如果重投影的点落在图像内，那就选最近邻的像素的feature</li>
+            <li>如果在图像外，就给一个零向量</li>
+          </ul>
+        </li>
+        <li>一个aggregator，得到一个3D点的general features
+          <ul>
+            <li>这里的挑战性在于：Input images的长度是可变的，并且没有顺序；因此，通过reprojector获取到的2D features也是没有顺序、任意尺寸的</li>
+            <li>因此把这里定义为一个注意力聚集过程</li>
+          </ul>
+        </li>
+        <li>一个neural renderer，来infer出那个点的外观和几何</li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"pixelNeRF: Neural Radiance Fields from One or Few Images"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">CVPR2021</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2012.02190.pdf">[paper]</a></strong> <strong><a href="https://alexyu.net/pixelnerf/">[web]</a></strong> <strong><a href="https://github.com/sxyu/pixel-nerf">[code]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">UCB</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Alex Yu</code>, <code class="language-plaintext highlighter-rouge">Vickie Ye</code>, <code class="language-plaintext highlighter-rouge">Matthew Tancik</code>, <code class="language-plaintext highlighter-rouge">Angjoo Kanazawa</code> <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">scene prior/category</code>, <code class="language-plaintext highlighter-rouge">CNN encoder</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+      <p><strong>评价</strong></p>
+
+      <ul>
+        <li>和GRF思路类似；每个点除了空间坐标以外，还额外condition一个feature，这个feature来自于把这个点重投影到input view之后索引出的input view feature space下的feature</li>
+        <li>作者评价的与GRF的区别
+          <ul>
+            <li>本篇在view下操作，而不像GRF那样在canonical space下操作，因此本文方法可以适用于更一般的设定；</li>
+            <li>本文方法的效果更好（笔者注：从web 视频来看，在少量view输入合成任务下的效果非常好）</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>image-conditioned NeRF
+          <ul>
+            <li>
+              <blockquote>
+                <p>To overcome the NeRF representation’s inability to share knowledge between scene</p>
+              </blockquote>
+            </li>
+            <li>为了克服NeRF这样的表达不能在scene与scene之间保留/共享知识的问题（NeRF每次都要train from scratch）</li>
+            <li>condition a NeRF on spatial image features</li>
+          </ul>
+        </li>
+        <li>在训练时不需要一个一致的标准正视图坐标系<img src="media/image-20201207190826404.png" alt="image-20201207190826404">
+</li>
+      </ul>
+    </li>
+    <li>
+<strong>Main components</strong>
+      <ul>
+        <li>全卷积图像encoder E
+          <ul>
+            <li>把输入图像encode进入一个pixel aligned 特征grid</li>
+          </ul>
+        </li>
+        <li>NeRF 网络 f
+          <ul>
+            <li>给定一个空间位置、encoded feature（位于重投影后的在图片上的坐标）</li>
+            <li>输出color + density</li>
+          </ul>
+        </li>
+        <li><img src="media/image-20201207191400152.png" alt="image-20201207191400152"></li>
+      </ul>
+    </li>
+    <li>multi-view aggregation 方式：
+      <ul>
+        <li><img src="media/image-20201221092641965.png" alt="image-20201221092641965"></li>
+        <li>在任意一个query point，对任意一个view，把query point \(\boldsymbol{\rm x}, \boldsymbol{\rm d}\) <strong><u>变换到input view space下</u></strong> <br>\(`\boldsymbol{\rm x}^{(i)}=\boldsymbol{\rm P}^{(i)}\boldsymbol{\rm x}`,\quad \boldsymbol{\rm d}^{(i)}=\boldsymbol{\rm R}^{(i)}\boldsymbol{\rm d}\)</li>
+        <li>在任意一个query point，对任意一个view，从投影后的图像位置的feature + position embedding + view direction embedding 计算中间变量<br>\(\boldsymbol{\rm V}^{(i)}=f_1(\gamma(\boldsymbol{\rm x}^{(i)}), \boldsymbol{\rm d}^{(i)};\boldsymbol{\rm W}(\pi(\boldsymbol{\rm x}^{(i)})))\)</li>
+        <li>在任意一个query point，对于所有view，把所有中间变量过average pooling layer \(\psi\)后再过一个网络渲染出\((\sigma, \boldsymbol{\rm c})\)<br>\((\sigma, \boldsymbol{\rm c})=f_2(\psi(\boldsymbol{\rm V}^{(1)},\ldots,\boldsymbol{\rm V}^{(n)}))\)</li>
+        <li>single view就是直接\((\sigma, \boldsymbol{\rm c})=f(\gamma(\boldsymbol{\rm x}),\boldsymbol{\rm d};\boldsymbol{\rm W}(\pi(\boldsymbol{\rm x})))\)</li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<h2 id="relighting">relighting</h2>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"NeRF in the Wild: Neural Radiance Fields for Unconstrained Photo Collections"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">CVPR2021</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2008.02268">[paper]</a></strong> <strong><a href="https://nerf-w.github.io/">[web]</a></strong>  <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Google</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Ricardo Martin-Brualla</code>, <code class="language-plaintext highlighter-rouge">Noha Radwan</code>, <code class="language-plaintext highlighter-rouge">Mehdi S. M. Sajjadi</code>, <code class="language-plaintext highlighter-rouge">Jonathan T. Barron</code>, <code class="language-plaintext highlighter-rouge">Alexey Dosovitskiy</code>, <code class="language-plaintext highlighter-rouge">Daniel Duckworth</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li><strong>Motivation</strong></li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Neural Reflectance Fields for Appearance Acquisition"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">0000</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2008.03824.pdf">[paper]</a></strong> <strong>[[code]]</strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">UCSD</code>, <code class="language-plaintext highlighter-rouge">UCB</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Adobe</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Sai Bi</code>, <code class="language-plaintext highlighter-rouge">Zexiang Xu</code>, <code class="language-plaintext highlighter-rouge">Pratul Srinivasan</code>, <code class="language-plaintext highlighter-rouge">Ben Mildenhall</code>, <code class="language-plaintext highlighter-rouge">Kalyan Sunkavalli</code>, <code class="language-plaintext highlighter-rouge">Miloš Hašan</code>, <code class="language-plaintext highlighter-rouge">Yannick Hold-Geoffroy</code>, <code class="language-plaintext highlighter-rouge">David Kriegman</code>, <code class="language-plaintext highlighter-rouge">Ravi Ramamoorthi</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li><strong>Motivation</strong></li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"NeRV: Neural Reflectance and Visibility Fields for Relighting and View Synthesis"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2012.03927.pdf">[paper]</a></strong> <strong>[[code]]</strong> <strong><a href="https://people.eecs.berkeley.edu/~pratul/nerv/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">UCB</code>, <code class="language-plaintext highlighter-rouge">MIT</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Google</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Pratul P. Srinivasan</code>, <code class="language-plaintext highlighter-rouge">Boyang Deng</code>, <code class="language-plaintext highlighter-rouge">Xiuming Zhang</code>, <code class="language-plaintext highlighter-rouge">Matthew Tancik</code>, <code class="language-plaintext highlighter-rouge">Ben Mildenhall</code>, <code class="language-plaintext highlighter-rouge">Jonathan T. Barron</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li><strong>Motivation</strong></li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"NeRD: Neural Reflectance Decomposition from Image Collections"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2012.03918.pdf">[paper]</a></strong> <strong><a href="https://github.com/cgtuebingen/NeRD-Neural-Reflectance-Decomposition">[code]</a></strong> <strong><a href="https://markboss.me/publication/2021-nerd/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">University of Tübingen </code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Google</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Mark Boss</code>, <code class="language-plaintext highlighter-rouge">Raphael Braun</code>, <code class="language-plaintext highlighter-rouge">Varun Jampani</code>, <code class="language-plaintext highlighter-rouge">Jonathan T. Barron</code>, <code class="language-plaintext highlighter-rouge">Ce Liu</code>, <code class="language-plaintext highlighter-rouge">Hendrik P.A. Lensch</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li><strong>Motivation</strong></li>
+  </ul>
+
+</details>
+
+<h2 id="pose-estimation">pose estimation</h2>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"iNeRF: Inverting Neural Radiance Fields for Pose Estimation"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2012.05877.pdf">[paper]</a></strong> <strong>[[code]]</strong> <strong><a href="http://yenchenlin.me/inerf/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">MIT</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Google</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Lin Yen-Chen</code>, <code class="language-plaintext highlighter-rouge">Pete Florence</code>, <code class="language-plaintext highlighter-rouge">Jonathan T. Barron</code>, <code class="language-plaintext highlighter-rouge">Alberto Rodriguez</code>, <code class="language-plaintext highlighter-rouge">Phillip Isola</code>, <code class="language-plaintext highlighter-rouge">Tsung-Yi Lin</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">pose estimation</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li><img src="media/iNerf.gif" alt="iNerf"></li>
+      </ul>
+    </li>
+    <li>
+<strong>Overview</strong>
+      <ul>
+        <li>就直接用像素的loss直接反向传播给pose<br><img src="media/image-20201223180241800.png" alt="image-20201223180241800">
+</li>
+        <li>关键在于sample pixels时的sample策略</li>
+        <li>pose参数化用的是exponential coordinates</li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<h2 id="basics">basics</h2>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Fourier Features Let Networks Learn High Frequency Functions in Low Dimensional Domains"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">NeurIPS2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2006.10739">[paper]</a></strong> <strong><a href="https://github.com/GlassyWing/fourier-feature-networks">[code-unofficial-SIREN-modified]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">UCB</code>, <code class="language-plaintext highlighter-rouge">UCSD</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Google</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Matthew Tancik</code>, <code class="language-plaintext highlighter-rouge">Pratul P. Srinivasan</code>, <code class="language-plaintext highlighter-rouge">Ben Mildenhall</code>, <code class="language-plaintext highlighter-rouge">Sara Fridovich-Keil</code>, <code class="language-plaintext highlighter-rouge">Nithin Raghavan</code>, <code class="language-plaintext highlighter-rouge">Utkarsh Singhal</code>, <code class="language-plaintext highlighter-rouge">Ravi Ramamoorthi</code>, <code class="language-plaintext highlighter-rouge">Jonathan T. Barron</code>, <code class="language-plaintext highlighter-rouge">Ren Ng</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">fourier features</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>傅里叶特征可以改善coordinate-based MLP的低维高频回归任务</li>
+        <li><img src="media/image-20201221172740873.png" alt="image-20201221172740873"></li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+  </article>
+
+  
+
+</div>
+
+      </div>
+    </div>
+
+    <footer>
+
+  <div class="wrapper">
+    © Copyright 2021 Jianfei Guo.
+    Powered by <a href="http://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>. Photos from <a href="https://unsplash.com" target="_blank">Unsplash</a>.
+
+    
+  </div>
+
+</footer>
+
+
+    <!-- Load jQuery -->
+<script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+
+<!-- Load Common JS -->
+<script src="https://ventusff.github.io/assets/js/common.js"></script>
+
+
+
+
+<!-- Load Anchor JS -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/anchor-js/3.2.2/anchor.min.js"></script>
+<script>
+  anchors.options.visible = 'always';
+  anchors.add('article h2, article h3, article h4, article h5, article h6');
+</script>
+
+
+
+<!-- Load fancybox -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
+<!-- Include custom icon fonts -->
+<link rel="stylesheet" href="https://ventusff.github.io/assets/css/fontawesome-all.min.css">
+<link rel="stylesheet" href="https://ventusff.github.io/assets/css/academicons.min.css">
+<link rel="stylesheet" href="https://ventusff.github.io/assets/iconfont/iconfont.css">
+
+<!-- Google Analytics -->
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-XXXXXXXXX', 'auto');
+ga('send', 'pageview');
+</script>
+
+    
+  </body>
+  
+<!-- Mermaid Js -->
+<script>
+
+    // mermaid rendering: inspired by https://stackoverflow.com/questions/53883747/how-to-make-github-pages-markdown-support-mermaid-diagram
+    // mermiad in details tag: inspired by https://gitlab.com/gitlab-org/gitlab/-/issues/28495
+    //          and by https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/assets/javascripts/behaviors/markdown/render_mermaid.js
+
+    function renderMermaids($els) {
+        if (!$els.length) return;
+
+        var config = {
+            startOnLoad: false,
+            theme: 'neutral', // forest
+            securityLevel: 'loose',
+            flowchart:{
+                    useMaxWidth:true,
+                    htmlLabels:false, // important for not squeezing blocks
+                }
+        };
+        // const theme =localStorage.getItem("theme");
+        // if(theme == "dark") config.theme = 'dark';  // currently needs to refresh to make dark mode toggle
+        mermaid.initialize(config);
+
+        $els.each((i, el) => {
+
+            // Mermaid doesn't like `<br />` tags, so collapse all like tags into `<br>`, which is parsed correctly.
+            const source = el.textContent.replace(/<br\s*\/>/g, '<br>');
+
+            // Remove any extra spans added by the backend syntax highlighting.
+            Object.assign(el, { textContent: source });
+
+            mermaid.init(undefined, el, id => {
+                const svg = document.getElementById(id);
+
+                // As of https://github.com/knsv/mermaid/commit/57b780a0d,
+                // Mermaid will make two init callbacks:one to initialize the
+                // flow charts, and another to initialize the Gannt charts.
+                // Guard against an error caused by double initialization.
+                if (svg.classList.contains('mermaid')) {
+                    console.log("return");
+                    return;
+                }
+
+                // svg.classList.add('mermaid'); //will add new bug
+
+                // pre > code > svg
+                svg.closest('pre').replaceWith(svg);
+
+                // We need to add the original source into the DOM to allow Copy-as-GFM
+                // to access it.
+                const sourceEl = document.createElement('text');
+                sourceEl.classList.add('source');
+                sourceEl.setAttribute('display', 'none');
+                sourceEl.textContent = source;
+
+                svg.appendChild(sourceEl);
+
+            });
+        });
+
+    }
+
+    const $els = $(document).find('.language-mermaid');
+    if ($els.length)
+    {
+        const visibleMermaids = $els.filter(function filter() {
+            return $(this).closest('details').length === 0 && $(this).is(':visible');
+        });
+
+        renderMermaids(visibleMermaids);
+
+        $els.closest('details').one('toggle', function toggle() {
+            if (this.open) {
+                renderMermaids($(this).find('.language-mermaid'));
+            }
+        });
+    }
+
+
+
+</script>
+
+
+  <!-- Auto config image to fancybox -->
+<script>
+    $(document).ready(function() {
+        $("article img[class!='emoji']").each(function() {
+            var currentImage = $(this);
+            currentImage.wrap("<a href='" + currentImage.attr("src") + "' data-fancybox='lightbox' data-caption='" + currentImage.attr("alt") + "'></a>");
+        });
+    });
+</script>
+
+</html>

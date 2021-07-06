@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>Jianfei Guo | DL for <strong>shape structures</strong> prior</title>
+  <meta name="description" content="Jianfei Guo. ffventus (at) gmail.com. I am a learner in representation learning and decision making. 
+">
+
+  <link rel="shortcut icon" href="https://ventusff.github.io/assets/img/favicon.ico?v=1">
+
+  <link rel="stylesheet" href="https://ventusff.github.io/assets/css/main.css">
+  <link rel="canonical" href="https://ventusff.github.io/notes/shape_structure">
+  
+
+    
+<!-- MathJax -->
+<script type="text/javascript">
+  window.MathJax = {
+    tex: {
+      tags: 'ams',
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ], // http://docs.mathjax.org/en/latest/input/tex/delimiters.html
+      displayMath: [['\\[','\\]'], ['$$','$$']]
+    }
+  };
+</script>
+<script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js"></script>
+<script defer src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+
+    
+<!-- Mermaid Js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/8.7.0/mermaid.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script> // this is the old version --> 
+
+  </head>
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    
+    <span class="site-title">
+        
+        <strong>Jianfei</strong> Guo
+    </span>
+    
+
+    <nav class="site-nav">
+      <input type="checkbox" id="nav-trigger" class="nav-trigger">
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewbox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"></path>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"></path>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"></path>
+            </svg>
+          </span>
+        </label>
+
+      <div class="trigger">
+        <!-- About -->
+        <a class="page-link" href="https://ventusff.github.io/">about</a>
+
+        <!-- Blog -->
+        <a class="page-link" href="https://ventusff.github.io/blog/">blog</a>
+
+        <!-- Pages -->
+        
+          
+        
+          
+        
+          
+        
+          
+            <a class="page-link" href="https://ventusff.github.io/notes/">notes</a>
+          
+        
+          
+        
+          
+        
+          
+        
+
+        <!-- CV link -->
+        <!-- <a class="page-link" href="https://ventusff.github.io/assets/pdf/CV.pdf">vitae</a> -->
+
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">DL for <strong>shape structures</strong> prior</h1>
+    <p class="post-subtitle"><strong>形状</strong>+结构先验 DL类方法</p>
+    <p class="post-meta"></p>
+  </header>
+
+  <article class="post-content">
+    <ul id="markdown-toc">
+  <li>
+<a href="#partstructure-aware-shape-representation" id="markdown-toc-partstructure-aware-shape-representation">part/structure-aware shape representation</a>    <ul>
+      <li><a href="#shape-correspondence" id="markdown-toc-shape-correspondence">shape correspondence</a></li>
+      <li><a href="#shape-analysis" id="markdown-toc-shape-analysis">shape analysis</a></li>
+      <li><a href="#structured-models" id="markdown-toc-structured-models">structured models</a></li>
+    </ul>
+  </li>
+  <li><a href="#deep-assembly" id="markdown-toc-deep-assembly">deep assembly</a></li>
+</ul>
+
+<hr>
+
+<h2 id="partstructure-aware-shape-representation">part/structure-aware shape representation</h2>
+
+<h3 id="shape-correspondence">shape correspondence</h3>
+
+<ul>
+  <li><em>Deformed Implicit Field: Modeling 3D Shapes with Learned Dense Correspondence</em></li>
+  <li><em>Deep Implicit Templates for 3D Shape Representation</em></li>
+</ul>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Unsupervised Learning of Intrinsic Structural Representation Points"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">CVPR2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2003.01661.pdf">[paper]</a></strong> <strong><a href="https://github.com/NolenChen/3DStructurePoints">[code]</a></strong>  <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">The University of Hong Kong</code>, <code class="language-plaintext highlighter-rouge">MPI</code>, <code class="language-plaintext highlighter-rouge">Shandong University</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Adobe</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Nenglun Chen</code>, <code class="language-plaintext highlighter-rouge">Lingjie Liu</code>, <code class="language-plaintext highlighter-rouge">Zhiming Cui</code>, <code class="language-plaintext highlighter-rouge">Runnan Chen</code>, <code class="language-plaintext highlighter-rouge">Duygu Ceylan</code>, <code class="language-plaintext highlighter-rouge">Changhe Tu</code>, <code class="language-plaintext highlighter-rouge">Wenping Wang</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>点云输入，无监督地learning structures of 3D shape</li>
+        <li><img src="media/image-20201229153625536.png" alt="image-20201229153625536"></li>
+      </ul>
+    </li>
+    <li>
+<strong>results</strong>
+      <ul>
+        <li><img src="media/image-20201229153526461.png" alt="image-20201229153526461"></li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Learning Implicit Functions for Topology-Varying Dense 3D Shape Correspondence"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">NeurIPS2020(Oral)</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2010.12320.pdf">[paper]</a></strong> <strong><a href="http://cvlab.cse.msu.edu/pdfs/Implicit_Dense_Correspondence_Supp.pdf">[supp]</a></strong> <strong><a href="https://github.com/liuf1990/Implicit_Dense_Correspondence">[code]</a></strong> <strong><a href="http://cvlab.cse.msu.edu/project-implicit-dense-correspondence.html">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Michigan State University</code> <strong>]</strong> <br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Feng Liu</code>, <code class="language-plaintext highlighter-rouge">Xiaoming Liu</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">implicit function</code>, <code class="language-plaintext highlighter-rouge">correspondence score</code>, <code class="language-plaintext highlighter-rouge">category shape correspondence</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>给定一组3D shapes（点云），category-specific model 无监督地学出逐pair（source 与target之间）的correspondence和部件segmentation</li>
+        <li>即使拓扑不一样也能学到相关性</li>
+        <li>有<code class="language-plaintext highlighter-rouge">correspondence</code>相关性分数输出<br><img src="media/image-20201229144020259.png" alt="image-20201229144020259">
+</li>
+      </ul>
+    </li>
+    <li><strong>Overview</strong></li>
+  </ul>
+
+</details>
+
+<h3 id="shape-analysis">shape analysis</h3>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;IP-Net&gt; "Combining Implicit Function Learning and Parametric Models for 3D Human Reconstruction"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">ECCV2020(Oral)</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2007.11432.pdf">[paper]</a></strong> <strong><a href="https://github.com/bharat-b7/IPNet">[code]</a></strong> <strong><a href="http://virtualhumans.mpi-inf.mpg.de/ipnet/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">MPI</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Google</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Bharat Lal Bhatnagar</code>, <code class="language-plaintext highlighter-rouge">Cristian Sminchisescu</code>, <code class="language-plaintext highlighter-rouge">Christian Theobalt</code>, <code class="language-plaintext highlighter-rouge">Gerard Pons-Moll</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">parametric human body model SMPL</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>
+<strong><u>keypoint 1</u></strong>：不是inside / outside两类区分的单层表面，而是 inside the body (R0), between the body and clothing (R1), outside the clothing (R2) 3类区分的双层表面<br><img src="media/image-20201229100344345.png" alt="image-20201229100344345">
+</li>
+        <li>
+<strong>keypoint 2</strong>
+          <ul>
+            <li>隐函数类的方法可以产生任意分辨率的细节，但是一般是static的不能控制</li>
+            <li>建立和parametric body model (<a href="https://smpl.is.tue.mpg.de/">SMPL</a>)的相关性，可以对预测出的implicit surface <code class="language-plaintext highlighter-rouge">register</code>注册 SMPL+D ，让预测出的implicit representation <strong><u>可以控制</u></strong> <br><img src="media/image-20201229101504269.png" alt="image-20201229101504269">
+</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>overview</strong>
+      <ul>
+        <li>输入一个稀疏点云（来自有关节、不同形状、不同pose、不同clothing的人类），一个occupancy predictor估计R0,R1,R2，一个multi-class classifier 估计part label（人的14类part）<br><img src="media/image-20201229102312212.png" alt="image-20201229102312212">
+          <ul>
+            <li>使用Marching Cubes从predict出的implicit functions产生mesh surface（内表面，外表面）</li>
+          </ul>
+        </li>
+        <li>把IP-Net的predictions注册到SMPL人类模型
+          <ul>
+            <li>optimization-based ，最优化SMPL的参数来fit 内表面预测\(\mathcal{S}_{in}\)</li>
+            <li>额外利用IP-Net预测出的part-labels，来保证SMPL的不同部件的mesh能正确解释对应部件的surface区域</li>
+          </ul>
+        </li>
+        <li>同样的idea还可以generalize to 3D hands
+          <ul>
+            <li><img src="media/image-20201229103342683.png" alt="image-20201229103342683"></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<h3 id="structured-models">structured models</h3>
+<ul>
+  <li>BSP-Net: Generating Compact Meshes via Binary Space Partitioning</li>
+  <li>partnet</li>
+  <li>structure net</li>
+</ul>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"BAE-NET: Branched Autoencoder for Shape Co-Segmentation"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">ICCV2019</code> <strong>]</strong> <strong><a href="https://openaccess.thecvf.com/content_ICCV_2019/papers/Chen_BAE-NET_Branched_Autoencoder_for_Shape_Co-Segmentation_ICCV_2019_paper.pdf">[paper]</a></strong> <strong><a href="https://openaccess.thecvf.com/content_ICCV_2019/supplemental/Chen_BAE-NET_Branched_Autoencoder_ICCV_2019_supplemental.pdf">[supp]</a></strong> <strong><a href="https://github.com/czq142857/BAE-NET">[code(tf)]</a></strong>  <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">SFU</code>, <code class="language-plaintext highlighter-rouge">IIT Bombay</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Adobe</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Zhiqin Chen</code>, <code class="language-plaintext highlighter-rouge">Kangxue Yin</code>, <code class="language-plaintext highlighter-rouge">Matthew Fisher</code>, <code class="language-plaintext highlighter-rouge">Siddhartha Chaudhuri</code>, <code class="language-plaintext highlighter-rouge">Hao Zhang</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">one-shot learning</code>, <code class="language-plaintext highlighter-rouge">k-neuron</code>, <code class="language-plaintext highlighter-rouge">inside-outside indicator</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>*<im-net> Learning Implicit Fields for Generative Shape Modeling (CVPR2019)* 的续作，inside / outside indicator作为shape表征</im-net>
+</li>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>把形状的 <code class="language-plaintext highlighter-rouge">co-segmentation</code> 看做表征学习问题</li>
+        <li>可以无监督、弱监督、<code class="language-plaintext highlighter-rouge">one-shot learning</code>，只需要用几个exemplars，就可以在shape 分割任务上好过在分割shape上训练的SOTA</li>
+        <li>无监督的 <strong><u>co-segmentation</u></strong> <br><img src="media/image-20201229094035378.png" alt="image-20201229094035378">
+</li>
+      </ul>
+    </li>
+    <li>
+<strong>overview</strong>
+      <ul>
+        <li>就是在<em>Learning Implicit Fields for Generative Shape Modeling</em> 的基础上，从原来的单个inside / outside indicator变成 <code class="language-plaintext highlighter-rouge">k</code> 个inside / outside indicator (<code class="language-plaintext highlighter-rouge">branched output</code>, one neuron each) ，然后在最后max pooling 把几个neuron <code class="language-plaintext highlighter-rouge">compose</code>在一起。</li>
+        <li><img src="media/image-20201229095002537.png" alt="image-20201229095002537"></li>
+        <li>让网络 <strong><u>“自动”</u></strong> 学出来一个个natural shape的neuron；没有强制保证<br><img src="media/image-20201229095340266.png" alt="image-20201229095340266">
+</li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;NSDN&gt; "Neural Star Domain as Primitive Representation"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">NeurIPS2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2010.11248.pdf">[paper]</a></strong>  <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">The University of Tokyo</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">RIKEN AIP</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Yuki Kawana</code>, <code class="language-plaintext highlighter-rouge">Yusuke Mukuta</code>, <code class="language-plaintext highlighter-rouge">Tatsuya Harada</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>Reconstructing 3D objects from 2D images + structured reconstruction</li>
+        <li><img src="media/image-20201229115853741.png" alt="image-20201229115853741"></li>
+        <li><img src="media/image-20201229115906619.png" alt="image-20201229115906619"></li>
+      </ul>
+    </li>
+    <li>
+<strong>overview</strong>
+      <ul>
+        <li><img src="media/image-20201229120028285.png" alt="image-20201229120028285"></li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"DSM-Net: Disentangled Structured Mesh Net for Controllable Generation of Fine Geometry"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">2020</code> <strong>]</strong> <strong><a href="http://geometrylearning.com/dsm-net/">[web]</a></strong> <strong><a href="https://arxiv.org/pdf/2008.05440.pdf">[paper]</a></strong>  <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">中科院计算所</code>, <code class="language-plaintext highlighter-rouge">中科院大学</code>, <code class="language-plaintext highlighter-rouge">Stanford</code>, <code class="language-plaintext highlighter-rouge">Cardiff University</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">company</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Jie Yang</code>, <code class="language-plaintext highlighter-rouge">Kaichun Mo</code>, <code class="language-plaintext highlighter-rouge">Yu-kun Lai</code>, <code class="language-plaintext highlighter-rouge">Leonidas Guibas</code>, <code class="language-plaintext highlighter-rouge">Lin Gao</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">3D shape generation</code>, <code class="language-plaintext highlighter-rouge">disentangled representation</code>, <code class="language-plaintext highlighter-rouge">structure</code>, <code class="language-plaintext highlighter-rouge">geometry</code>, <code class="language-plaintext highlighter-rouge">hierarchies</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>把structure(topology)和geometry进一步解耦，in a synergistic manner</li>
+        <li><img src="media/image-20201217154222663.png" alt="image-20201217154222663"></li>
+      </ul>
+    </li>
+    <li>
+<strong>Overview</strong>
+      <ul>
+        <li>用Recursive Neural Networks(RvNNs, 注意RNN是recurrent NN) hierarchically encode和decode  structure和geometry，在hierarchy的每一层都有bijective mapping<br><img src="media/image-20201217155349248.png" alt="image-20201217155349248">
+</li>
+        <li>同时用两个分开的但是高度耦合的VAE学习structure 和geometry，把他们encode into two latent spaces</li>
+      </ul>
+    </li>
+    <li>
+<strong>disentangled shape  representation</strong>
+      <ul>
+        <li>structure hierarchy抽象出符号部件(symbolic parts)与关系
+          <ul>
+            <li>inspired by <em>PT2PC: Learning to Generate 3D Point Cloud Shapes from Part Tree Conditions. 2020</em>
+</li>
+            <li>每个部件用semantic label (e.g. chair back, chair leg)表示，引入PartNet dataset中丰富的部件关系
+              <ul>
+                <li>\(\boldsymbol{\rm H}\) <strong><u>纵向的parent-child inclusion 关系</u></strong> (e.g. chair back and chair back bars)</li>
+                <li>\(\boldsymbol{\rm R}\) <strong><u>横向的among-sibling 部件对称性与邻接性</u></strong>(e.g. chair back bars have translational symmetry)</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>geometry hierarchy是部件的geometry
+          <ul>
+            <li>表征就是正常的多顶点mesh</li>
+            <li>假设一个5402顶点构成的封闭mesh，计算oriented bounding box</li>
+            <li>然后通过non-rigid registration 变形这个mesh到target part geometry</li>
+            <li>然后用ACAP作为部件表征
+              <ul>
+                <li><em>Sparse data driven mesh deformation. 2019</em></li>
+                <li><em>SDM-NET: Deep Generative Network for Structured Deformable Mesh. 2019</em></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>structure hierarchy和geometry hierarchy之间有bijective mapping
+          <ul>
+            <li>符号部件\(l_i\)对应部件geometry \(G_i\)，层级\(\boldsymbol{\rm H}\)和关系\(\boldsymbol{\rm R}\)则隐式地互相一致
+              <ul>
+                <li>在学习的时候两个hierarchies有communication channels</li>
+              </ul>
+            </li>
+            <li>虽然结构和几何要解耦，但是他们还是需要彼此兼容来产生好的、现实的形状
+              <ul>
+                <li>一方面，shape structure 为 part geometry提供high-level guidance
+                  <ul>
+                    <li>e.g. 如果four legs of a chair对称，那么他们应该具有identical part geometry</li>
+                  </ul>
+                </li>
+                <li>另一方面，给定part geometry以后，只有若干种适用的shape structures（而不是全部）
+                  <ul>
+                    <li>e.g. 如果没有lift handle或者gas cylinder parts，不可能组装一个swivel chair</li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>conditional part geometry VAE</strong>
+      <ul>
+        <li>encode和decode时候都condition on part structure information</li>
+        <li><img src="media/image-20201217162903345.png" alt="image-20201217162903345"></li>
+      </ul>
+    </li>
+    <li>
+<strong>Disentangled Geometry and Structure VAEs</strong>
+      <ul class="task-list">
+        <li>下图蓝色代表geometry，红色代表structure<br>encoding的时候，从geometry和structure feature encode出geometry<br>decoding的时候，从geometry和structure feature decode出geometry<br>
+</li>
+        <li><img src="media/image-20201217162351563.png" alt="image-20201217162351563"></li>
+        <li class="task-list-item">
+<input type="checkbox" class="task-list-item-checkbox" disabled>Q: what?</li>
+      </ul>
+    </li>
+    <li>
+<strong>results</strong>
+      <ul>
+        <li><img src="media/image-20201217163302020.png" alt="image-20201217163302020"></li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Compositionally Generalizable 3D Structure Prediction"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2012.02493.pdf">[paper]</a></strong> <strong>[[code]]</strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">UCSD</code>, <code class="language-plaintext highlighter-rouge">USTC</code>, <code class="language-plaintext highlighter-rouge">Stanford</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Google</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Songfang Han</code>, <code class="language-plaintext highlighter-rouge">Jiayuan Gu</code>, <code class="language-plaintext highlighter-rouge">Kaichun Mo</code>, <code class="language-plaintext highlighter-rouge">Li Yi</code>, <code class="language-plaintext highlighter-rouge">Siyu Hu</code>, <code class="language-plaintext highlighter-rouge">Xuejin Chen</code>, <code class="language-plaintext highlighter-rouge">Hao Su</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">object parts</code>, <code class="language-plaintext highlighter-rouge">single view</code>, <code class="language-plaintext highlighter-rouge">partnet dataset</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Review</strong>
+      <ul>
+        <li>思路、框架清晰；carefully designed subproblems</li>
+        <li>可解释性很强，不是随随便便拿来GCN胡乱用一下</li>
+        <li>部件表征：cuboids</li>
+      </ul>
+    </li>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>学到不同物体、不同物体类别之间那些公共的部件、部件间的关系、连接</li>
+        <li>把整个物体的shape生成问题转为几个子问题的组合</li>
+        <li>关注的是逐part pair的相对位置的预测</li>
+        <li><img src="media/image-20201217094300461.png" alt="image-20201217094300461"></li>
+      </ul>
+    </li>
+    <li>
+<strong>overview</strong>
+      <ul>
+        <li>用geometry primitives来代表部件（具体来说，oriented bounding cuboids，长方体），每个部件有\(p_i=[c_x,c_y,c_z,s_x,s_y,s_z,q]\)
+          <ul>
+            <li>遵循StructureNet的设定<br><em>Structurenet: Hierarchical graph networks for 3d shape generation 2019</em>
+</li>
+          </ul>
+        </li>
+        <li>所有模块都是有监督的；part真值来自于PartNet的3D labels</li>
+        <li>步骤：
+          <ul>
+            <li>MaskRCNN来提取部件instance mask</li>
+            <li>identify parallelism for part pairs，对每组平行的部件预测他们共享的edge direction</li>
+            <li>identify translational symmetry within part pairs，对每组平动对称的部件预测他们共享的edge length</li>
+            <li>预测部件pairs之间的连接性，提取一个基于连接性的部件树</li>
+            <li>预测邻接部件的相对位置，在遍历部件树的时候组装整个形状</li>
+          </ul>
+        </li>
+        <li>[isolation principle] 重度依赖部件masks作为模块的输入来引起对局部区域的关注</li>
+        <li>[relativity principle] 依赖于pairwise关系</li>
+        <li><img src="media/image-20201217094400096.png" alt="image-20201217094400096"></li>
+      </ul>
+    </li>
+    <li>==<strong>relative position prediciton</strong>==
+      <ul>
+        <li>从root part开始，逐pair地添加other parts</li>
+        <li>很多过去的工作都是估计在相机坐标系下的绝对位置，或者是一个(类别级别先验)canonical space下的pose</li>
+        <li>然而，绝对位置对于shape scale敏感，对optical axis的平动也很敏感，对于简单的类别内预测的表现都很差</li>
+        <li>
+<strong><u>Connectivity-based Part Tree</u></strong>：追求通过strong <strong>pairwise</strong> relationships来组装parts
+          <ul>
+            <li>主要用的是基于连接性的关系</li>
+            <li>首先识别空间上接触的部件pair，然后预测他们之间的相对位置</li>
+            <li>选择【接触关系】原因：
+              <ul>
+                <li>接触的部件空间上接近，互相之间有strong arrangement constraints</li>
+                <li>当没有遮挡情况下，评估两个部件有没有接触在图像上都不太难，并不需要类别级别的知识</li>
+                <li>这种关系非常普遍</li>
+                <li>对于新类别的物体也可以很好地迁移</li>
+              </ul>
+            </li>
+            <li>==<strong>思考</strong>==
+              <ul>
+                <li>这里的想法和我们非常一致，我们扩展到更多类型的关系应该就可以实现</li>
+              </ul>
+            </li>
+            <li>主要方法
+              <ul>
+                <li>训练一个连接性分类器，预测parts pair是否在原来的3D shape 互相接触</li>
+                <li>用连接性类构建一个part tree
+                  <ul>
+                    <li>首先构建一个连接图，把连接性分数高的pair连接起来</li>
+                    <li>然后贪婪地构建一个spanning tree
+                      <ul>
+                        <li>具体：通过预测出的大小，选最大的part作为root node，然后迭代地选剩下的最大的部件连到当前树上</li>
+                        <li>如果图中包含多个连接起来的components，那就构建part forest</li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>
+<strong><u>joint-based relative position</u></strong> 逐pair预测相对位置
+          <ul>
+            <li>instead of 直接预测两个center的相对位置，基于接触点来用上更强的位置先验</li>
+            <li>接触点必须位于每个部件的cuboid中</li>
+            <li>用接触点来参数化部件center之间的相对关系
+              <ul>
+                <li>接触点
+                  <ul>
+                    <li>在part \(p_1\)坐标系下接触点坐标\(c^1\)，在part \(p_2\)坐标系下接触点坐标\(c^2\)，假设\(p_1\), \(p_2\)在world frame下坐标为\(l_1^W\), \(l_2^W\)，由于是同一个点，应有<br>\(l_1^W+c^1=l_2^W+c^2\)</li>
+                    <li>则两个center之间的相对位置可以这样infer：<br>\(l_{1 \rightarrow2}^W=l_2^W-l_1^W=c^1-c^2\)</li>
+                    <li>
+                      <ul class="task-list">
+                        <li class="task-list-item">
+<input type="checkbox" class="task-list-item-checkbox" disabled checked>Q：这里可能有些问题，考虑到坐标系旋转，并不应是简单加法，不过意思到了<br>A：没有问题，这里\(c^1\), \(c^2\)都是世界坐标系下的</li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+                <li>接触点估计：如何infer \(c^i\)
+                  <ul>
+                    <li>接触点应位于cuboid表面或者cuboid内部，因此将接触点表示为cuboid顶点的interpolation<br>\(c^i=\sum_{j=1}^{8}\omega_{i,j}\cdot v_{i,j}\), where \(\sum_{j=1}^8\omega_{i,j}=1\) and \(\omega_{i,j} \geq0\)</li>
+                    <li>用神经网络预测\(\omega_i,j\)，输入reference image和两个部件mask的feature的stack</li>
+                    <li>为了让接触点预测的结果和cuboid顶点顺序无关，结构和PointNet segmentation的结构类似</li>
+                    <li><em>Deep learning on point sets for 3d classification and segmentation.2017</em></li>
+                  </ul>
+                </li>
+                <li><img src="media/image-20201217095049304.png" alt="image-20201217095049304"></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>效果</strong>
+      <ul>
+        <li>真值mask基本可以做到很完美的组装，predicted mask效果也可以接受，毕竟predict出来的mask会出问题</li>
+        <li><img src="media/image-20201217095300439.png" alt="image-20201217095300439"></li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<h2 id="deep-assembly">deep assembly</h2>
+
+
+  </article>
+
+  
+
+</div>
+
+      </div>
+    </div>
+
+    <footer>
+
+  <div class="wrapper">
+    © Copyright 2021 Jianfei Guo.
+    Powered by <a href="http://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>. Photos from <a href="https://unsplash.com" target="_blank">Unsplash</a>.
+
+    
+  </div>
+
+</footer>
+
+
+    <!-- Load jQuery -->
+<script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+
+<!-- Load Common JS -->
+<script src="https://ventusff.github.io/assets/js/common.js"></script>
+
+
+
+
+<!-- Load Anchor JS -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/anchor-js/3.2.2/anchor.min.js"></script>
+<script>
+  anchors.options.visible = 'always';
+  anchors.add('article h2, article h3, article h4, article h5, article h6');
+</script>
+
+
+
+<!-- Load fancybox -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
+<!-- Include custom icon fonts -->
+<link rel="stylesheet" href="https://ventusff.github.io/assets/css/fontawesome-all.min.css">
+<link rel="stylesheet" href="https://ventusff.github.io/assets/css/academicons.min.css">
+<link rel="stylesheet" href="https://ventusff.github.io/assets/iconfont/iconfont.css">
+
+<!-- Google Analytics -->
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-XXXXXXXXX', 'auto');
+ga('send', 'pageview');
+</script>
+
+    
+  </body>
+  
+<!-- Mermaid Js -->
+<script>
+
+    // mermaid rendering: inspired by https://stackoverflow.com/questions/53883747/how-to-make-github-pages-markdown-support-mermaid-diagram
+    // mermiad in details tag: inspired by https://gitlab.com/gitlab-org/gitlab/-/issues/28495
+    //          and by https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/assets/javascripts/behaviors/markdown/render_mermaid.js
+
+    function renderMermaids($els) {
+        if (!$els.length) return;
+
+        var config = {
+            startOnLoad: false,
+            theme: 'neutral', // forest
+            securityLevel: 'loose',
+            flowchart:{
+                    useMaxWidth:true,
+                    htmlLabels:false, // important for not squeezing blocks
+                }
+        };
+        // const theme =localStorage.getItem("theme");
+        // if(theme == "dark") config.theme = 'dark';  // currently needs to refresh to make dark mode toggle
+        mermaid.initialize(config);
+
+        $els.each((i, el) => {
+
+            // Mermaid doesn't like `<br />` tags, so collapse all like tags into `<br>`, which is parsed correctly.
+            const source = el.textContent.replace(/<br\s*\/>/g, '<br>');
+
+            // Remove any extra spans added by the backend syntax highlighting.
+            Object.assign(el, { textContent: source });
+
+            mermaid.init(undefined, el, id => {
+                const svg = document.getElementById(id);
+
+                // As of https://github.com/knsv/mermaid/commit/57b780a0d,
+                // Mermaid will make two init callbacks:one to initialize the
+                // flow charts, and another to initialize the Gannt charts.
+                // Guard against an error caused by double initialization.
+                if (svg.classList.contains('mermaid')) {
+                    console.log("return");
+                    return;
+                }
+
+                // svg.classList.add('mermaid'); //will add new bug
+
+                // pre > code > svg
+                svg.closest('pre').replaceWith(svg);
+
+                // We need to add the original source into the DOM to allow Copy-as-GFM
+                // to access it.
+                const sourceEl = document.createElement('text');
+                sourceEl.classList.add('source');
+                sourceEl.setAttribute('display', 'none');
+                sourceEl.textContent = source;
+
+                svg.appendChild(sourceEl);
+
+            });
+        });
+
+    }
+
+    const $els = $(document).find('.language-mermaid');
+    if ($els.length)
+    {
+        const visibleMermaids = $els.filter(function filter() {
+            return $(this).closest('details').length === 0 && $(this).is(':visible');
+        });
+
+        renderMermaids(visibleMermaids);
+
+        $els.closest('details').one('toggle', function toggle() {
+            if (this.open) {
+                renderMermaids($(this).find('.language-mermaid'));
+            }
+        });
+    }
+
+
+
+</script>
+
+
+  <!-- Auto config image to fancybox -->
+<script>
+    $(document).ready(function() {
+        $("article img[class!='emoji']").each(function() {
+            var currentImage = $(this);
+            currentImage.wrap("<a href='" + currentImage.attr("src") + "' data-fancybox='lightbox' data-caption='" + currentImage.attr("alt") + "'></a>");
+        });
+    });
+</script>
+
+</html>

@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>Jianfei Guo | semantic acvitation</title>
+  <meta name="description" content="Jianfei Guo. ffventus (at) gmail.com. I am a learner in representation learning and decision making. 
+">
+
+  <link rel="shortcut icon" href="https://ventusff.github.io/assets/img/favicon.ico?v=1">
+
+  <link rel="stylesheet" href="https://ventusff.github.io/assets/css/main.css">
+  <link rel="canonical" href="https://ventusff.github.io/notes/semantic_activation">
+  
+
+    
+<!-- MathJax -->
+<script type="text/javascript">
+  window.MathJax = {
+    tex: {
+      tags: 'ams',
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ], // http://docs.mathjax.org/en/latest/input/tex/delimiters.html
+      displayMath: [['\\[','\\]'], ['$$','$$']]
+    }
+  };
+</script>
+<script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js"></script>
+<script defer src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+
+    
+<!-- Mermaid Js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/8.7.0/mermaid.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script> // this is the old version --> 
+
+  </head>
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    
+    <span class="site-title">
+        
+        <strong>Jianfei</strong> Guo
+    </span>
+    
+
+    <nav class="site-nav">
+      <input type="checkbox" id="nav-trigger" class="nav-trigger">
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewbox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"></path>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"></path>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"></path>
+            </svg>
+          </span>
+        </label>
+
+      <div class="trigger">
+        <!-- About -->
+        <a class="page-link" href="https://ventusff.github.io/">about</a>
+
+        <!-- Blog -->
+        <a class="page-link" href="https://ventusff.github.io/blog/">blog</a>
+
+        <!-- Pages -->
+        
+          
+        
+          
+        
+          
+        
+          
+            <a class="page-link" href="https://ventusff.github.io/notes/">notes</a>
+          
+        
+          
+        
+          
+        
+          
+        
+
+        <!-- CV link -->
+        <!-- <a class="page-link" href="https://ventusff.github.io/assets/pdf/CV.pdf">vitae</a> -->
+
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">semantic acvitation</h1>
+    <p class="post-subtitle">语义激活思路来源</p>
+    <p class="post-meta"></p>
+  </header>
+
+  <article class="post-content">
+    <ul id="markdown-toc">
+  <li><a href="#point-set-generation-fixed-length" id="markdown-toc-point-set-generation-fixed-length">point set generation (fixed length)</a></li>
+  <li><a href="#point-cloud-generation-from-distribution-to-distribution" id="markdown-toc-point-cloud-generation-from-distribution-to-distribution">point cloud generation (from distribution to distribution)</a></li>
+  <li><a href="#continuous-function-representation-sampling" id="markdown-toc-continuous-function-representation-sampling">continuous function representation (sampling)</a></li>
+  <li><a href="#continuous-function-representation-ray-tracing" id="markdown-toc-continuous-function-representation-ray-tracing">continuous function representation (ray tracing)</a></li>
+  <li><a href="#iso-surface--parametric-generation--generative--gan" id="markdown-toc-iso-surface--parametric-generation--generative--gan">iso-surface / parametric generation / generative / GAN</a></li>
+  <li><a href="#implicit-fieldfeature-semantic-information" id="markdown-toc-implicit-fieldfeature-semantic-information">implicit field/feature semantic information</a></li>
+  <li><a href="#nerf-%E5%BC%95%E7%94%A8%E4%B8%AD%E5%B8%A6label" id="markdown-toc-nerf-引用中带label">NeRF 引用中带label</a></li>
+  <li><a href="#semantic-envelope" id="markdown-toc-semantic-envelope">semantic envelope</a></li>
+  <li><a href="#semantic-activated-surface--interface-area" id="markdown-toc-semantic-activated-surface--interface-area">semantic activated surface / interface area</a></li>
+</ul>
+
+<hr>
+
+<ul>
+  <li>keyword
+    <ul>
+      <li>image segmentation</li>
+      <li>(implicit function) isosurface extraction</li>
+      <li>isosurface + GAN ?</li>
+      <li>differentiable + isosurface ?</li>
+      <li>semantic + isosurface ?</li>
+      <li>
+<strong>point-based</strong> representation
+        <ul>
+          <li>point set generation network (大多是auto-decoder结构，输出固定个数的点)</li>
+          <li>point cloud generation (GAN)</li>
+        </ul>
+      </li>
+      <li>implicit field/feature + semantic information</li>
+      <li>sitzmann inferring semantic 被引</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="point-set-generation-fixed-length">point set generation (fixed length)</h2>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;r-GAN, l-GAN&gt; &lt;PC-GAN&gt; "learning representations and generative models for 3d point clouds"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">ICLR2018</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/1707.02392">[paper]</a></strong> <strong>[[code]]</strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">University</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">company</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">xxxx</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+      <p>评价</p>
+
+      <ul>
+        <li>使用了全连接层；由于全连接层在生成有结构的数据时有困难，因此难以产生带有多样性的真实形状</li>
+      </ul>
+    </li>
+    <li><strong>Motivation</strong></li>
+    <li>主要构成
+      <ul>
+        <li>Raw point cloud GAN (r-GAN) 产生raw \(2048 \times 3\) point set 输出
+          <ul>
+            <li>generator从高斯噪声vector产生 \(2048 \times 3\) 点云集输出</li>
+            <li>discriminator使用正常的auto encoder，直接输入raw point cloud</li>
+          </ul>
+        </li>
+        <li>Latent-space GAN (l-GAN)
+          <ul>
+            <li>首先预训练一个pre-trained AE，然后generator和discriminator 都在这个pretrained AE的 bottle-neck variables 操作</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"A Point Set Generation Network for 3D Object Reconstruction from a Single Image"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">2016</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/1612.00603.pdf">[paper]</a></strong> <strong><a href="https://github.com/fanhqme/PointSetGeneration">[code]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Tsinghua</code>, <code class="language-plaintext highlighter-rouge">Stanford</code> <strong>]</strong> <br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Haoqiang Fan</code>, <code class="language-plaintext highlighter-rouge">Hao Su</code>, <code class="language-plaintext highlighter-rouge">Leonidas Guibas</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">point set generation</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li><strong>Motivation</strong></li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;DPC&gt; "Unsupervised Learning of Shape and Pose with Differentiable Point Clouds"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">2018</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/1810.09381.pdf">[paper]</a></strong> <strong>[[code]]</strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">MPI</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Intel</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Eldar Insafutdinov</code>, <code class="language-plaintext highlighter-rouge">Alexey Dosovitskiy</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>from unlabeled category-specific images to 3D shape + camera pose</li>
+        <li>直接用MLP输出点云集</li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<h2 id="point-cloud-generation-from-distribution-to-distribution">point cloud generation (from distribution to distribution)</h2>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;tree-GAN&gt; "3D Point Cloud Generative Adversarial Network Based on Tree Structured Graph Convolutions"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">ICCV2019</code> <strong>]</strong> <strong><a href="https://openaccess.thecvf.com/content_ICCV_2019/papers/Shu_3D_Point_Cloud_Generative_Adversarial_Network_Based_on_Tree_Structured_ICCV_2019_paper.pdf">[paper]</a></strong> <strong><a href="https://openaccess.thecvf.com/content_ICCV_2019/supplemental/Shu_3D_Point_Cloud_ICCV_2019_supplemental.pdf">[supp]</a></strong> <strong><a href="https://%20github.com/seowok/TreeGAN">[code]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">(Korea)Chung-Ang University</code> <strong>]</strong> <br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Dong Wook Shu</code>, <code class="language-plaintext highlighter-rouge">Sung Woo Park</code>, <code class="language-plaintext highlighter-rouge">Junseok Kwon</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li><img src="media/image-20201207194307508.png" alt="image-20201207194307508"></li>
+        <li>tree结构的GCN<img src="media/image-20201207194208941.png" alt="image-20201207194208941">
+</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p>[image-to-point cloud] Geometric adversarial loss for single-view 3D-object reconstruction</p>
+
+  <p>[point cloud-to-point cloud]  Point cloud auto-encoder via deep grid deformation.</p>
+
+  <p>GANS:</p>
+
+  <p>[40] 使用图卷积+GAN；邻接矩阵的计算太复杂，要平方计算</p>
+
+</details>
+
+<h2 id="continuous-function-representation-sampling">continuous function representation (sampling)</h2>
+
+<ul>
+  <li>occupancy networks: 多分辨率等值面提取技术</li>
+</ul>
+
+<h2 id="continuous-function-representation-ray-tracing">continuous function representation (ray tracing)</h2>
+
+<ul>
+  <li>DVR</li>
+</ul>
+
+<h2 id="iso-surface--parametric-generation--generative--gan">iso-surface / parametric generation / generative / GAN</h2>
+
+<h2 id="implicit-fieldfeature-semantic-information">implicit field/feature semantic information</h2>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;semantic-SRN&gt; "Inferring Semantic Information with 3D Neural Scene Representations"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">3DV 2020</code> <strong>]</strong> <strong><a href="https://www.computationalimaging.org/publications/semantic-srn/">[web]</a></strong> <strong><a href="https://arxiv.org/pdf/2003.12673.pdf">[paper]</a></strong>  <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Stanford</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Amit Kohli</code>, <code class="language-plaintext highlighter-rouge">Vincent Sitzmann</code>, <code class="language-plaintext highlighter-rouge">Gordon Wetzstein</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">multi-modal features</code>, <code class="language-plaintext highlighter-rouge">semi-supervision</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>证明像SRN这样的隐式神经表征也可以包含多模态的信息：外观，形状，语义，<em>etc.</em>
+</li>
+      </ul>
+    </li>
+    <li><strong>OverView</strong></li>
+    <li>
+      <ol>
+        <li>[训练] 正常的类别物体SRN预训练</li>
+        <li>[训练] 固定SRN的参数和RGB neural renderer，在<u>已经固定</u>的SRN feature上利用少量的监督数据(如文中只用了30张语义标注好的RGB图片) 训练一个额外的语义分类器</li>
+        <li>[测试] 单张RGB图片 ==<strong><u>and/or</u></strong>== 单张标注好的语义图片，提取code
+          <ol>
+            <li>注意这里的and/or：训练的时候RGB和语义监督信号都有，测试的时候只需要二者之一就足够，不一定全都要</li>
+          </ol>
+        </li>
+        <li>[测试] 利用第3步提取好的code在更多camera view下render出RGB和语义
+          <ul>
+            <li><img src="media/image-20201203121856589.png" alt="image-20201203121856589"></li>
+          </ul>
+        </li>
+      </ol>
+    </li>
+  </ul>
+
+</details>
+
+<h2 id="nerf-引用中带label">NeRF 引用中带label</h2>
+
+<p>暂无</p>
+
+<h2 id="semantic-envelope">semantic envelope</h2>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Neural Cages for Detail-Preserving 3D Deformations"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">CVPR2020(Oral)</code> <strong>]</strong> <strong><a href="https://igl.ethz.ch/projects/neural-cage/06035.pdf">[paper]</a></strong> <strong><a href="https://github.com/yifita/deep_cage">[code]</a></strong> <strong><a href="https://yifita.github.io/project/neural-shape/">[web]</a></strong> <strong><a href="https://igl.ethz.ch/projects/neural-cage/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">ETH</code>, <code class="language-plaintext highlighter-rouge">IIT Bombay</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Adobe</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Wang Yifan</code>, <code class="language-plaintext highlighter-rouge">Noam Aigerman</code>, <code class="language-plaintext highlighter-rouge">Vladimir G. Kim</code>, <code class="language-plaintext highlighter-rouge">Siddhartha Chaudhuri</code>, <code class="language-plaintext highlighter-rouge">Olga Sorkine-Hornung</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">cage-based deformation</code>, <code class="language-plaintext highlighter-rouge">pointnet encoder</code>, <code class="language-plaintext highlighter-rouge">deformation</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li><img src="media/image-20201224095705974.png" alt="image-20201224095705974"></li>
+        <li><img src="media/image-20201224105352429.png" alt="image-20201224105352429"></li>
+        <li>deformation一般都会有两组互相矛盾的目标函数
+          <ul>
+            <li>alignment with the target 和目标对齐</li>
+            <li>adhering to quality metrics 比如最小的扭曲，保留局部几何细节</li>
+          </ul>
+        </li>
+        <li>过去有一些手动的方法，但是往往局限于具体的表面</li>
+        <li>过去也有一些神经网络-based方法，预测所有顶点的new positions
+          <ul>
+            <li>但是由于神经网络难以捕捉、保留、产生高频的特征</li>
+          </ul>
+        </li>
+        <li>本篇通过借助一种传统的几何处理技术：<code class="language-plaintext highlighter-rouge">cage-based deformations</code> (CBD)，来circumvent上述问题
+          <ul>
+            <li><em>Harmonic coordinates for character articulation, Pushkar Joshi et al., 2007</em></li>
+            <li><em>Mean value coordinates for closed triangular meshes. Tao Ju et al., 2005</em></li>
+            <li><em>Green coordinates. Yaron Lipman et al., 2008</em></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>Overview</strong>
+      <ul>
+        <li>不直接变形surface，而是变形稀疏笼子；<br>surface上面的每个点都有笼子顶点的加权和表达，权重函数不变，通过变形笼子来变形surface<br>这样可以最大程度保留局部细节，相当于直接扭曲空间，而不是移动surface vertices<img src="media/image-20201224090310673.png" alt="image-20201224090310673">
+</li>
+      </ul>
+    </li>
+    <li>
+<strong>results</strong>
+      <ul>
+        <li><img src="media/image-20201224111334294.png" alt="image-20201224111334294"></li>
+        <li>deformation transfer
+          <ul>
+            <li><img src="media/image-20201224111514751.png" alt="image-20201224111514751"></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>cage-based deformations CBD</strong>
+      <ul>
+        <li>
+<strong>intuition</strong>
+          <ul>
+            <li>instead of 单独变形表面上的那些点，CBD 直接 warp 整个surface 嵌入到的那个ambient space</li>
+          </ul>
+        </li>
+        <li>CBD通过控制一个稀疏的triangle mesh: \(cage \; \mathcal{C}\)控制这个warping
+          <ul>
+            <li>在给定一个cage后，ambient space中的任意一点\(\boldsymbol{\rm p}\in\mathbb{R}^3\) 被一组<code class="language-plaintext highlighter-rouge">generalized barycentric coordinates</code> 编码，即通过cage顶点\(\boldsymbol{\rm v}_j\)的加权平均来表达：<br>\(\boldsymbol{\rm p}=\sum \phi^{\mathcal{C}}_j(\boldsymbol{\rm p}) \boldsymbol{\rm v}_j\) <br>其中权重函数\(\{ \phi^{\mathcal{C}}_j \}\) 依赖于\(\boldsymbol{\rm p}\) 相对于cage 顶点\(\{\boldsymbol{\rm v}_j\}\)的相对位置</li>
+            <li>通过简单地offset cage的顶点，然后再用pre-computed weights去计算ambient space中的任意一点新坐标\(\boldsymbol{\rm v}_j'\)，就可以实现变形<br>\(\boldsymbol{\rm p}'=\underset {0 \leq j \lt \lvert V_{\mathcal{C}}\rvert }{\sum} \phi^{\mathcal{C}}_j(\boldsymbol{\rm p}) \boldsymbol{\rm v}_j'\)<br>注意上式中的权重函数\(\{ \phi^{\mathcal{C}}_j \}\)还是之前计算好的，即权重函数不变，只有笼子顶点变了</li>
+          </ul>
+        </li>
+        <li>attain weight functions
+          <ul>
+            <li>过去CBD领域构造了很多规则来获取带有各种特殊属性的权重函数，比如补间、线性精度、平滑和最小的扭曲；</li>
+            <li>本文选择了<code class="language-plaintext highlighter-rouge">mean value coordinates</code> (MVC) ，因为他们的方法补间属性很好，并且简洁、对source cage顶点和deformed cage顶点可微</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>learning</strong>：如何改成learning based CBD
+      <ul>
+        <li>目标是end-to-end pipeline，所以训练网络去预测source cage和target cage</li>
+        <li>cage-prediction model \(\mathcal{N}_{\mathcal{C}}\)：给定一个source shape\(\mathcal{S}_{\mathcal{s}}\)，预测它的cage \(\mathcal{C}_{\mathcal{s}}\)
+          <ul>
+            <li>
+\[\mathcal{C}_{\mathcal{s}}=\mathcal{N}_{\mathcal{C}}(\mathcal{S}_{\mathcal{s}})+\mathcal{C}_0\]
+            </li>
+          </ul>
+        </li>
+        <li>deformation-prediction model \(\mathcal{N}_{d}\)，预测从\(\mathcal{C}_{\mathcal{S}}\)的offset，来获得deformed cage
+          <ul>
+            <li>
+\[\mathcal{C}_{\mathcal{s}\rightarrow t}=\mathcal{N}_{d}(\mathcal{S}_{t},\mathcal{S}_{\mathcal{s}})+\mathcal{C}_{\mathcal{s}}\]
+            </li>
+          </ul>
+        </li>
+        <li>source shape提输入点云的pointNet feature，decode预测source cage <br>source net的pointNet feature和target shape的pointNet feature拼一起，decode预测deformed cage<br>source cage通过MVC得到source shape的权重函数，然后用CBD变形得到deformed shape<br><img src="media/image-20201224114815289.png" alt="image-20201224114815289">
+</li>
+      </ul>
+    </li>
+    <li>
+<strong>losses</strong>
+      <ul>
+        <li>主要分三项
+          <ul>
+            <li>最优化source cage，鼓励正的mean value coordinates；就是惩罚负的MVC坐标（相当于让surface一定在笼子里）</li>
+            <li>最优化变形：衡量和目标对齐；就是chamfer distance</li>
+            <li>最优化变形：衡量shape细节保留</li>
+          </ul>
+        </li>
+        <li>shape细节保留
+          <ul>
+            <li>来自Laplacian regularization 的灵感，让形状更平滑</li>
+            <li>对于man-made shapes，使用两个额外的loss来学到这类人工制品的形状的先验
+              <ul>
+                <li>normal consistency：法向量一致性<br>保留平面元素，比如桌面<br>惩罚deformation后的PCA-normal<br>有效提升了感知的质量</li>
+                <li>类似 <em>3DN: 3D deformation network. Wang et al. CVPR2019</em>，使用对称性loss：衡量形状和它在x=0平面的镜像的chamfer distance</li>
+                <li><img src="media/image-20201224162354565.png" alt="image-20201224162354565"></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<h2 id="semantic-activated-surface--interface-area">semantic activated surface / interface area</h2>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Where2Act: From Pixels to Actions for Articulated 3D Objects"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2021</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2101.02692">[paper]</a></strong> <strong><a href="https://github.com/daerduoCarey/where2act">[code]</a></strong> <strong><a href="https://cs.stanford.edu/~kaichun/where2act/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Stanford</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Facebook</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Kaichun Mo</code>, <code class="language-plaintext highlighter-rouge">Leonidas Guibas</code>, <code class="language-plaintext highlighter-rouge">Mustafa Mukadam</code>, <code class="language-plaintext highlighter-rouge">Abhinav Gupta</code>, <code class="language-plaintext highlighter-rouge">Shubham Tulsiani</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">category extrapolation</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>对于带关节的物体，infer哪里去操作；</li>
+        <li>
+<img class="emoji" title=":pushpin:" alt=":pushpin:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f4cc.png" height="20" width="20"> 可以做 <strong><u>category extrapolation</u></strong>！infer不在训练类别外的类别的操作面！</li>
+        <li><img src="media/where2act.png" alt="where2act"></li>
+      </ul>
+    </li>
+    <li>
+<strong>Overview</strong>
+      <ul>
+        <li><img src="media/where2act_network.png" alt="where2act_network"></li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+
+  </article>
+
+  
+
+</div>
+
+      </div>
+    </div>
+
+    <footer>
+
+  <div class="wrapper">
+    © Copyright 2021 Jianfei Guo.
+    Powered by <a href="http://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>. Photos from <a href="https://unsplash.com" target="_blank">Unsplash</a>.
+
+    
+  </div>
+
+</footer>
+
+
+    <!-- Load jQuery -->
+<script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+
+<!-- Load Common JS -->
+<script src="https://ventusff.github.io/assets/js/common.js"></script>
+
+
+
+
+<!-- Load Anchor JS -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/anchor-js/3.2.2/anchor.min.js"></script>
+<script>
+  anchors.options.visible = 'always';
+  anchors.add('article h2, article h3, article h4, article h5, article h6');
+</script>
+
+
+
+<!-- Load fancybox -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
+<!-- Include custom icon fonts -->
+<link rel="stylesheet" href="https://ventusff.github.io/assets/css/fontawesome-all.min.css">
+<link rel="stylesheet" href="https://ventusff.github.io/assets/css/academicons.min.css">
+<link rel="stylesheet" href="https://ventusff.github.io/assets/iconfont/iconfont.css">
+
+<!-- Google Analytics -->
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-XXXXXXXXX', 'auto');
+ga('send', 'pageview');
+</script>
+
+    
+  </body>
+  
+<!-- Mermaid Js -->
+<script>
+
+    // mermaid rendering: inspired by https://stackoverflow.com/questions/53883747/how-to-make-github-pages-markdown-support-mermaid-diagram
+    // mermiad in details tag: inspired by https://gitlab.com/gitlab-org/gitlab/-/issues/28495
+    //          and by https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/assets/javascripts/behaviors/markdown/render_mermaid.js
+
+    function renderMermaids($els) {
+        if (!$els.length) return;
+
+        var config = {
+            startOnLoad: false,
+            theme: 'neutral', // forest
+            securityLevel: 'loose',
+            flowchart:{
+                    useMaxWidth:true,
+                    htmlLabels:false, // important for not squeezing blocks
+                }
+        };
+        // const theme =localStorage.getItem("theme");
+        // if(theme == "dark") config.theme = 'dark';  // currently needs to refresh to make dark mode toggle
+        mermaid.initialize(config);
+
+        $els.each((i, el) => {
+
+            // Mermaid doesn't like `<br />` tags, so collapse all like tags into `<br>`, which is parsed correctly.
+            const source = el.textContent.replace(/<br\s*\/>/g, '<br>');
+
+            // Remove any extra spans added by the backend syntax highlighting.
+            Object.assign(el, { textContent: source });
+
+            mermaid.init(undefined, el, id => {
+                const svg = document.getElementById(id);
+
+                // As of https://github.com/knsv/mermaid/commit/57b780a0d,
+                // Mermaid will make two init callbacks:one to initialize the
+                // flow charts, and another to initialize the Gannt charts.
+                // Guard against an error caused by double initialization.
+                if (svg.classList.contains('mermaid')) {
+                    console.log("return");
+                    return;
+                }
+
+                // svg.classList.add('mermaid'); //will add new bug
+
+                // pre > code > svg
+                svg.closest('pre').replaceWith(svg);
+
+                // We need to add the original source into the DOM to allow Copy-as-GFM
+                // to access it.
+                const sourceEl = document.createElement('text');
+                sourceEl.classList.add('source');
+                sourceEl.setAttribute('display', 'none');
+                sourceEl.textContent = source;
+
+                svg.appendChild(sourceEl);
+
+            });
+        });
+
+    }
+
+    const $els = $(document).find('.language-mermaid');
+    if ($els.length)
+    {
+        const visibleMermaids = $els.filter(function filter() {
+            return $(this).closest('details').length === 0 && $(this).is(':visible');
+        });
+
+        renderMermaids(visibleMermaids);
+
+        $els.closest('details').one('toggle', function toggle() {
+            if (this.open) {
+                renderMermaids($(this).find('.language-mermaid'));
+            }
+        });
+    }
+
+
+
+</script>
+
+
+  <!-- Auto config image to fancybox -->
+<script>
+    $(document).ready(function() {
+        $("article img[class!='emoji']").each(function() {
+            var currentImage = $(this);
+            currentImage.wrap("<a href='" + currentImage.attr("src") + "' data-fancybox='lightbox' data-caption='" + currentImage.attr("alt") + "'></a>");
+        });
+    });
+</script>
+
+</html>

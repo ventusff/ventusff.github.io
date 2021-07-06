@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>Jianfei Guo | neural network basics</title>
+  <meta name="description" content="Jianfei Guo. ffventus (at) gmail.com. I am a learner in representation learning and decision making. 
+">
+
+  <link rel="shortcut icon" href="https://ventusff.github.io/assets/img/favicon.ico?v=1">
+
+  <link rel="stylesheet" href="https://ventusff.github.io/assets/css/main.css">
+  <link rel="canonical" href="https://ventusff.github.io/notes/neural_network">
+  
+
+    
+<!-- MathJax -->
+<script type="text/javascript">
+  window.MathJax = {
+    tex: {
+      tags: 'ams',
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ], // http://docs.mathjax.org/en/latest/input/tex/delimiters.html
+      displayMath: [['\\[','\\]'], ['$$','$$']]
+    }
+  };
+</script>
+<script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js"></script>
+<script defer src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+
+    
+<!-- Mermaid Js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/8.7.0/mermaid.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script> // this is the old version --> 
+
+  </head>
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    
+    <span class="site-title">
+        
+        <strong>Jianfei</strong> Guo
+    </span>
+    
+
+    <nav class="site-nav">
+      <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+      <div class="trigger">
+        <!-- About -->
+        <a class="page-link" href="https://ventusff.github.io/">about</a>
+
+        <!-- Blog -->
+        <a class="page-link" href="https://ventusff.github.io/blog/">blog</a>
+
+        <!-- Pages -->
+        
+          
+        
+          
+        
+          
+        
+          
+            <a class="page-link" href="https://ventusff.github.io/notes/">notes</a>
+          
+        
+          
+        
+          
+        
+          
+        
+
+        <!-- CV link -->
+        <!-- <a class="page-link" href="https://ventusff.github.io/assets/pdf/CV.pdf">vitae</a> -->
+
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">neural network basics</h1>
+    <p class="post-subtitle">神经网络基础讨论</p>
+    <p class="post-meta"></p>
+  </header>
+
+  <article class="post-content">
+    <ul id="markdown-toc">
+  <li><a href="#topic-非线性激活-relu" id="markdown-toc-topic-非线性激活-relu">topic: 非线性激活 ReLU</a></li>
+  <li><a href="#topic-卷积操作" id="markdown-toc-topic-卷积操作">topic: 卷积操作</a></li>
+  <li><a href="#topic-frequencies" id="markdown-toc-topic-frequencies">topic: frequencies</a></li>
+  <li><a href="#topic-condition-embedding-vs-hyper-networks" id="markdown-toc-topic-condition-embedding-vs-hyper-networks">topic: condition embedding vs. hyper networks</a></li>
+</ul>
+
+<hr />
+
+<h2 id="topic-非线性激活-relu">topic: 非线性激活 ReLU</h2>
+
+<ul>
+  <li>MLP不能学到multiplier
+    <ul>
+      <li>可以考虑用log-normalization，这样就把乘法转换为加法
+        <ul>
+          <li>
+\[m=x \cdot y \Rightarrow \ln(m)=\ln(x)+\ln(y)\]
+          </li>
+        </ul>
+      </li>
+      <li>MLP在一定范围(一定区域)内可以学到这个乘法函数
+        <ul>
+          <li>本质是在学习函数的一定区域内的surface，==而不是函数本身==<br /><img src="media/image-20201209155947067.png" alt="image-20201209155947067" /></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>MLP+ReLU的本质：在一定范围内分段线性拟合一个曲线/曲面/超曲面
+    <ul>
+      <li>因此，只要一个函数(数量值或向量值)的值域是闭集，那就基本可以学出任何复杂的连续函数</li>
+      <li>比如对于一个一元数量值函数y=x^2的MLP+ReLU拟合：
+        <ul>
+          <li>1层感知机+2个中间层neuron，函数就分了2段</li>
+          <li>多加层、多加神经元，无非是把函数分了更多段去拟合；</li>
+          <li><img src="media/image-20201209155947067.png" alt="image-20201209155947067" /></li>
+        </ul>
+      </li>
+      <li>把上面的折线扩展延伸到空间，MLP+ReLU学到的就是一个个线性平面多边形构成的<u>分段三元数量值函数</u>，去分段拟合一个空间曲面
+        <ul>
+          <li><img src="media/image-20201209162429622.png" alt="image-20201209162429622" /></li>
+          <li>这种结构，其实和计算机中存储一个三维模型的Mesh的结构完全一致：<br />一个mesh就是由一段段polygon构成的</li>
+          <li>也正因如此，只要我们能够显式地解析出神经元的激活关系，就可以解析地找出MLP零值面对应的polygon <br />见<a href="http://proceedings.mlr.press/v119/lei20a/lei20a.pdf">Analytic Marching: An Analytic Meshing Solution from
+ Deep Implicit Surface Networks</a></li>
+          <li>简单的ReLU带来的强大的非线性能力，让学习空间中的复杂表面成为了可能：因为确实只需要分段地学习每一个多边形而已</li>
+        </ul>
+      </li>
+      <li>继续升维，复杂中间层、神经元的MLP+ReLU，其实就是由一段段超平面构成的多元向量值分段函数</li>
+    </ul>
+  </li>
+  <li>另外也可以看到，对于一元数量值函数来说，y = 0 不仅是一段折线，y &gt; 0 ， y &lt; 0也可以把一个空间分成两部分
+    <ul>
+      <li>从这个角度延伸，继续升维，可以理解到分类器是在特征空间中找到一个（或多个）区分多维特征的超曲面(分段线性拟合出来的)</li>
+      <li>这个分段函数所围区域，可以是闭合的，也可以是开的；就像线性规划里的多个不等式既可以围成一个闭合的区域也可以围成一个开的区域</li>
+      <li>这个分段函数所围区域，内、外部有明确的正负号，一定是内正外负或者内负外正</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="topic-卷积操作">topic: 卷积操作</h2>
+
+<ul>
+  <li>卷积核出现的必要性
+    <ul>
+      <li>考虑图像分类。
+        <ul>
+          <li>如果直接用图像像素作为特征，特征空间区分不同类别的超平面的寻找将十分的困难
+            <ul>
+              <li>而且对于多分类器来说，用图像像素直接作为特征，多个类别之间可能也不会太明显，i.e.多个类别的特征点的分布很有可能都是挤在一起的</li>
+              <li>毕竟MLP学到的空间分割其实都是二分割，多分类器也只是一个个二分类器的集合；只用图像像素特征难以很好地区分</li>
+            </ul>
+          </li>
+          <li>不用图像像素，用手动设计的一些特征提取子，比如拉普拉斯算子、边缘提取算子、高斯算子…
+            <ul>
+              <li>手动设计，多样性其实不多</li>
+            </ul>
+          </li>
+          <li>考虑图像分类。卷积核的出现，就是为了更好地提取局部特征，从而搭配MLP形成一个合适的特征空间，这个特征空间可以只用一个个二分类的组合就可以分开多个类别<br /><img src="media/image-20201209163614662.png" alt="MNIST tSNE plot" /></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="topic-frequencies">topic: frequencies</h2>
+
+<ul>
+  <li>
+    <blockquote>
+      <p>inherent limitations of neural networks to capture, preserve, and generate high frequencies</p>
+    </blockquote>
+    <ul>
+      <li><em>Neural Cages for Detail-Preserving 3D Deformations, CVPR2020</em></li>
+      <li>神经网络难以捕捉、保留、产生高频率的特征
+        <ul>
+          <li>e.g. 该文中的表面deformations时，那些表面上的thin structures, fine details</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <blockquote>
+      <p>As fully connected layers are biased towards learning low-frequency representations [26]</p>
+    </blockquote>
+    <ul>
+      <li><em>Canonical Capsules: Unsupervised Capsules in Canonical Pose, 2020</em></li>
+      <li>全连接层倾向于biased to 低频的表征
+        <ul>
+          <li>e.g. 该文中，对于胶囊描述子的点云特征直接通过MLP就回归出了胶囊描述子的当前(在canonical space中)的pose</li>
+        </ul>
+      </li>
+      <li>其引文[26]: <em>Convergence and Generalization in Neural Networks. NeurIPS2018</em></li>
+    </ul>
+  </li>
+  <li>coordinate-based 方法（如NeRF，SIREN），往往使用一种周期性的positional encoding / periodic activation，来更好地表达fine details
+    <ul>
+      <li><em>NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis. ECCV2020</em></li>
+      <li><em>Fourier Features Let Networks Learn High Frequency Functions in Low Dimensional Domains. NeurIPS2020</em></li>
+      <li><em>(SIREN) Implicit Neural Representations</em>
+<em>with Periodic Activation Functions. NeurIPS2020</em></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="topic-condition-embedding-vs-hyper-networks">topic: condition embedding vs. hyper networks</h2>
+
+
+  </article>
+
+  
+
+</div>
+
+      </div>
+    </div>
+
+    <footer>
+
+  <div class="wrapper">
+    &copy; Copyright 2021 Jianfei Guo.
+    Powered by <a href="http://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>. Photos from <a href="https://unsplash.com" target="_blank">Unsplash</a>.
+
+    
+  </div>
+
+</footer>
+
+
+    <!-- Load jQuery -->
+<script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+
+<!-- Load Common JS -->
+<script src="https://ventusff.github.io/assets/js/common.js"></script>
+
+
+
+
+<!-- Load Anchor JS -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/anchor-js/3.2.2/anchor.min.js"></script>
+<script>
+  anchors.options.visible = 'always';
+  anchors.add('article h2, article h3, article h4, article h5, article h6');
+</script>
+
+
+
+<!-- Load fancybox -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
+<!-- Include custom icon fonts -->
+<link rel="stylesheet" href="https://ventusff.github.io/assets/css/fontawesome-all.min.css">
+<link rel="stylesheet" href="https://ventusff.github.io/assets/css/academicons.min.css">
+<link rel="stylesheet" href="https://ventusff.github.io/assets/iconfont/iconfont.css">
+
+<!-- Google Analytics -->
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-XXXXXXXXX', 'auto');
+ga('send', 'pageview');
+</script>
+
+    
+  </body>
+  
+<!-- Mermaid Js -->
+<script>
+
+    // mermaid rendering: inspired by https://stackoverflow.com/questions/53883747/how-to-make-github-pages-markdown-support-mermaid-diagram
+    // mermiad in details tag: inspired by https://gitlab.com/gitlab-org/gitlab/-/issues/28495
+    //          and by https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/assets/javascripts/behaviors/markdown/render_mermaid.js
+
+    function renderMermaids($els) {
+        if (!$els.length) return;
+
+        var config = {
+            startOnLoad: false,
+            theme: 'neutral', // forest
+            securityLevel: 'loose',
+            flowchart:{
+                    useMaxWidth:true,
+                    htmlLabels:false, // important for not squeezing blocks
+                }
+        };
+        // const theme =localStorage.getItem("theme");
+        // if(theme == "dark") config.theme = 'dark';  // currently needs to refresh to make dark mode toggle
+        mermaid.initialize(config);
+
+        $els.each((i, el) => {
+
+            // Mermaid doesn't like `<br />` tags, so collapse all like tags into `<br>`, which is parsed correctly.
+            const source = el.textContent.replace(/<br\s*\/>/g, '<br>');
+
+            // Remove any extra spans added by the backend syntax highlighting.
+            Object.assign(el, { textContent: source });
+
+            mermaid.init(undefined, el, id => {
+                const svg = document.getElementById(id);
+
+                // As of https://github.com/knsv/mermaid/commit/57b780a0d,
+                // Mermaid will make two init callbacks:one to initialize the
+                // flow charts, and another to initialize the Gannt charts.
+                // Guard against an error caused by double initialization.
+                if (svg.classList.contains('mermaid')) {
+                    console.log("return");
+                    return;
+                }
+
+                // svg.classList.add('mermaid'); //will add new bug
+
+                // pre > code > svg
+                svg.closest('pre').replaceWith(svg);
+
+                // We need to add the original source into the DOM to allow Copy-as-GFM
+                // to access it.
+                const sourceEl = document.createElement('text');
+                sourceEl.classList.add('source');
+                sourceEl.setAttribute('display', 'none');
+                sourceEl.textContent = source;
+
+                svg.appendChild(sourceEl);
+
+            });
+        });
+
+    }
+
+    const $els = $(document).find('.language-mermaid');
+    if ($els.length)
+    {
+        const visibleMermaids = $els.filter(function filter() {
+            return $(this).closest('details').length === 0 && $(this).is(':visible');
+        });
+
+        renderMermaids(visibleMermaids);
+
+        $els.closest('details').one('toggle', function toggle() {
+            if (this.open) {
+                renderMermaids($(this).find('.language-mermaid'));
+            }
+        });
+    }
+
+
+
+</script>
+
+
+  <!-- Auto config image to fancybox -->
+<script>
+    $(document).ready(function() {
+        $("article img[class!='emoji']").each(function() {
+            var currentImage = $(this);
+            currentImage.wrap("<a href='" + currentImage.attr("src") + "' data-fancybox='lightbox' data-caption='" + currentImage.attr("alt") + "'></a>");
+        });
+    });
+</script>
+
+</html>

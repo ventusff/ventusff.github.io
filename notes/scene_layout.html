@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>Jianfei Guo | scene layout</title>
+  <meta name="description" content="Jianfei Guo. ffventus (at) gmail.com. I am a learner in representation learning and decision making. 
+">
+
+  <link rel="shortcut icon" href="https://ventusff.github.io/assets/img/favicon.ico?v=1">
+
+  <link rel="stylesheet" href="https://ventusff.github.io/assets/css/main.css">
+  <link rel="canonical" href="https://ventusff.github.io/notes/scene_layout">
+  
+
+    
+<!-- MathJax -->
+<script type="text/javascript">
+  window.MathJax = {
+    tex: {
+      tags: 'ams',
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ], // http://docs.mathjax.org/en/latest/input/tex/delimiters.html
+      displayMath: [['\\[','\\]'], ['$$','$$']]
+    }
+  };
+</script>
+<script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js"></script>
+<script defer src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+
+    
+<!-- Mermaid Js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/8.7.0/mermaid.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script> // this is the old version --> 
+
+  </head>
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    
+    <span class="site-title">
+        
+        <strong>Jianfei</strong> Guo
+    </span>
+    
+
+    <nav class="site-nav">
+      <input type="checkbox" id="nav-trigger" class="nav-trigger">
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewbox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"></path>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"></path>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"></path>
+            </svg>
+          </span>
+        </label>
+
+      <div class="trigger">
+        <!-- About -->
+        <a class="page-link" href="https://ventusff.github.io/">about</a>
+
+        <!-- Blog -->
+        <a class="page-link" href="https://ventusff.github.io/blog/">blog</a>
+
+        <!-- Pages -->
+        
+          
+        
+          
+        
+          
+        
+          
+            <a class="page-link" href="https://ventusff.github.io/notes/">notes</a>
+          
+        
+          
+        
+          
+        
+          
+        
+
+        <!-- CV link -->
+        <!-- <a class="page-link" href="https://ventusff.github.io/assets/pdf/CV.pdf">vitae</a> -->
+
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">scene layout</h1>
+    <p class="post-subtitle">场景布局相关研究</p>
+    <p class="post-meta"></p>
+  </header>
+
+  <article class="post-content">
+    <ul id="markdown-toc">
+  <li><a href="#indoor-scene-datasets" id="markdown-toc-indoor-scene-datasets">indoor scene datasets</a></li>
+  <li><a href="#scene-graph--scene-text-to-image-generation--indoor-scene-synthesis" id="markdown-toc-scene-graph--scene-text-to-image-generation--indoor-scene-synthesis">scene graph / scene text to image generation / indoor scene synthesis</a></li>
+  <li><a href="#capsule-networks" id="markdown-toc-capsule-networks">capsule networks</a></li>
+</ul>
+
+<hr>
+
+<h2 id="indoor-scene-datasets">indoor scene datasets</h2>
+<ul>
+  <li>
+<del>SUNCG</del> (until now, 2021-01-10)</li>
+  <li>scannet</li>
+  <li>scenenet</li>
+  <li>scenenet RGBD
+    <ul>
+      <li>由于随机生成场景时是”从空中往下落”的设定，很多random的场景重度散乱，渲染是realistic了，场景布置非常non-realistic<br>不过那57个manual的场景还是足够真实的</li>
+      <li><img src="media/SceneNetRGBD_table.png" alt="SceneNetRGBD_table"></li>
+    </ul>
+  </li>
+  <li>replica</li>
+  <li>matterport3D</li>
+  <li>gibson / gibsonv2</li>
+  <li>habitat</li>
+  <li>ai2thor</li>
+  <li>
+<a href="https://tianchi.aliyun.com/specials/promotion/alibaba-3d-scene-dataset">3DFront</a>, by <a href="https://www.tangping.com/">Alibaba 躺平</a>, 中科院计算所, SFU；<a href="https://arxiv.org/pdf/2011.09127.pdf">paper</a>
+    <ul>
+      <li><img src="media/image-20210110184524771.png" alt="image-20210110184524771"></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="scene-graph--scene-text-to-image-generation--indoor-scene-synthesis">scene graph / scene text to image generation / indoor scene synthesis</h2>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;Deep-Synth&gt; "Deep Convolutional Priors for Indoor Scene Synthesis"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">SIGGRAPH2018</code> <strong>]</strong> <strong><a href="https://kwang-ether.github.io/pdf/deepsynth.pdf">[paper]</a></strong> <strong><a href="https://github.com/brownvc/deep-synth">[code]</a></strong> <strong>[[web]]</strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Brown University</code>, <code class="language-plaintext highlighter-rouge">Princeton University</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Kai Wang</code>, <code class="language-plaintext highlighter-rouge">Manolis Savva</code>, <code class="language-plaintext highlighter-rouge">Angel X Chang</code>, <code class="language-plaintext highlighter-rouge">Daniel Ritchie</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li><strong>Motivation</strong></li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;Fast-Synth&gt; "Fast and Flexible Indoor Scene Synthesis via Deep Convolutional Generative Models"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">CVPR2019</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/1811.12463">[paper]</a></strong> <strong><a href="https://github.com/brownvc/fast-synth">[code]</a></strong> <strong>[[web]]</strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Brown University</code> <strong>]</strong> <br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Daniel Ritchie</code>, <code class="language-plaintext highlighter-rouge">Kai Wang</code>, <code class="language-plaintext highlighter-rouge">Yu-an Lin</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">abcd</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li><strong>Motivation</strong></li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">&lt;3D_SLN&gt;"End-to-End Optimization of Scene Layout"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">CVPR2020(oral)</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2007.11744.pdf">[paper]</a></strong> <strong><a href="https://github.com/aluo-x/3D_SLN">[code]</a></strong> <strong><a href="https://www.youtube.com/watch?v=1GQ8IkI6ZJM">[video]</a></strong> <strong><a href="http://3dsln.csail.mit.edu/">[web]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">MIT:CSAIL</code>, <code class="language-plaintext highlighter-rouge">CMU</code>, <code class="language-plaintext highlighter-rouge">Stanford</code> <strong>]</strong> <br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Andrew Luo</code>, <code class="language-plaintext highlighter-rouge">Zhoutong Zhang</code>, <code class="language-plaintext highlighter-rouge">Jiajun Wu</code>, <code class="language-plaintext highlighter-rouge">Joshua B. Tenenbaum</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">scene graph</code>, <code class="language-plaintext highlighter-rouge">conditional scene synthesis</code>, <code class="language-plaintext highlighter-rouge">2.5D</code>,<code class="language-plaintext highlighter-rouge">variational generative model</code>， <code class="language-plaintext highlighter-rouge">graph-based variational auto-encoders</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <table>
+    <thead>
+      <tr>
+        <th><img src="media/image-20201028170115727.png" alt="image-20201028170115727"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>scene generation + refinement</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>Traditional scene graph based image generation (e.g. <em>[CVPR2018] sg2im</em>)
+          <ul>
+            <li>在image space中建模物体关系(而不是scene space)</li>
+            <li>没有显式的3D物体概念（只有像素）</li>
+          </ul>
+        </li>
+        <li>Layout Generation (e.g. *<deep-synth> [SIGGRAPH2018] Deep Convolutional Priors for Indoor Scene Synthesis*)
+</deep-synth>          <ul>
+            <li>no spatial-conditioning</li>
+            <li>auto-regressive 自回归 (slow)
+              <ul class="task-list">
+                <li class="task-list-item">
+<input type="checkbox" class="task-list-item-checkbox" disabled checked>Q: what?<br>A: 第n+1个物体的属性depend on 前n个物体的属性；序列化的结构</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>核心issues
+          <ul>
+            <li>scene space下的3D关系</li>
+            <li>解耦的布局、形状、图像构成</li>
+            <li>基于2.5D+语义目标的object locations的refinement
+              <ul class="task-list">
+                <li class="task-list-item">
+<input type="checkbox" class="task-list-item-checkbox" disabled checked>Q: what? <br>A: 朝着一个target 图片/语义分割图 来用auto-decoder的形式 优化出layout</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>主要贡献</strong>
+      <ul>
+        <li>3D-SLN model 可以从一个scene graph生成 <strong>diverse and accurate</strong> scene layouts</li>
+        <li>3D scene layouts 可以用 2.5D+语义信息 finetune</li>
+        <li>应用展示：scene graph based layout synthesis + exemplar based image synthesis</li>
+      </ul>
+    </li>
+    <li>
+<strong>数据集/数据特征/数据定义</strong>
+      <ul>
+        <li>物体3D model 是直接从SUNCG数据集中 retrive的；选择类别内最相似的bbox</li>
+        <li>scene graph定义：==与我们类似==
+          <ul>
+            <li>scene graph <code class="language-plaintext highlighter-rouge">y</code>由一组triplets构成，\((o_i, p, o_j)\)</li>
+            <li>\(o_i\)代表第i-th物体的type(索引embedding) + attributes(索引embedding), \(p\)代表空间关系(索引embedding)</li>
+          </ul>
+        </li>
+        <li>本文中layout的数据结构/物理含义：
+          <ul>
+            <li>each element \(y_i\) in layout \(y\) 定义是一个 7-tuple，代表物体的bbox和竖直轴旋转：\(y_i=(\min_{X_i}, \min_{Y_i}, \min_{Z_i}, \max_{X_i}, \max_{Y_i}, \max_{Z_i}, \omega_i )\)</li>
+          </ul>
+        </li>
+        <li>本文中latent space的定义：
+          <ul>
+            <li>[box_emdding, angle_ambedding] (因为是VAE，所以还分了mean, var)</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>主要组件</strong>
+      <ul>
+        <li>conditional (on scene graph) layout synthesizer
+          <ul>
+            <li>产生的而是3D scene layout；<br>每个物体都有3D bbox + 竖直轴旋转</li>
+            <li>把传统2D scene graph数据增强为3D scene graph，把每个物体关系编码到三维空间</li>
+            <li><strong><u>虽然是一个encoder-decoder结构，但是generate过程其实就用不到encoder了，decoder才是关键</u></strong></li>
+          </ul>
+        </li>
+        <li>集成了一个differentiable renderer来只用scene的2D投影来refine 最终的layout
+          <ul>
+            <li>给定一张semantics map和depth map，可微分渲染器来 <strong>optimize over</strong> the synthesized layout去 <strong>拟合</strong> 给定的输入，通过 <strong><u>analysis-by-synthesis</u></strong> fashion</li>
+            <li>其实就是一个auto-decoder结构，通过整个可微分通路，把sample出的layout latent反向传播最优化更新（文中称之为”refinement”/”fine tune”/”generate a layout toward a target layout”）</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><strong>layout generator的网络架构</strong></li>
+  </ul>
+
+  <table>
+    <thead>
+      <tr>
+        <th><img src="media/image-20201028170249809.png" alt="image-20201028170249809"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+<strong><u>测试</u></strong> 时，scene graph + 从一个learned distribution 采样latent code =&gt; generate scene layout <br><strong><u>训练</u></strong> 时，input scene graph + GT layout 先通过encoder提取出其layout latent  (学出一个distribution)，然后用提取出的layout latent + input scene graph 生成predicted layout</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <ul>
+    <li><strong>encoder</strong></li>
+  </ul>
+
+  <pre><code class="language-mermaid">graph LR
+	subgraph scene_graph[input scene graph]
+	relationships["relationships&lt;br&gt;(索引)"]
+	obj_type["object types&lt;br&gt;(索引，per-object)"]
+	obj_attr["object attributes&lt;br&gt;(索引，per-object)"]
+	end
+	subgraph encoder
+	obj_vecs
+	angle_vecs
+	pred_vecs
+	boxes_vecs
+	new_obj_vecs[object vector after GCN]
+	GCN((GCN))
+	obj_vecs --&gt; obj_vecs2
+	boxes_vecs --&gt; obj_vecs2
+	angle_vecs --&gt; obj_vecs2
+	obj_vecs2 --&gt; GCN
+	pred_vecs --&gt; GCN
+	GCN --&gt; new_obj_vecs
+	new_obj_vecs -- box_mean_var --&gt; bbox_latent
+	new_obj_vecs -- angle_mean_var --&gt; angle_latent
+	end
+	subgraph gt_layout["ground truth layout&lt;br&gt;(per-object)"]
+	bbox_gt["min_x&lt;br&gt;min_y&lt;br&gt;min_z&lt;br&gt;max_x&lt;br&gt;max_y&lt;br&gt;max_z"]
+	angles_gt["angle"]
+	end
+	obj_type -- nn.Embedding --&gt; obj_vecs
+	obj_attr -- nn.Embedding --&gt; obj_vecs
+	relationships -- nn.Embedding --&gt; pred_vecs
+	angles_gt -- nn.Embedding --&gt; angle_vecs
+	bbox_gt -- nn.Linear --&gt; boxes_vecs
+	z["z [mean, var]&lt;br&gt;(per-object)"]
+	bbox_latent --&gt; z
+	angle_latent --&gt; z
+</code></pre>
+
+  <ul>
+    <li>
+<strong>decoder</strong>
+      <ul>
+        <li>注意：sample到的z拼接到obj_vecs有两种可选方式
+          <ul>
+            <li>可以先把z拼接到GCN之前的object vectors，然后GCN</li>
+            <li>也可以先GCN然后再把z拼接到GCN之后的object vectors</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+  <pre><code class="language-mermaid">graph LR
+	subgraph scene_graph[input scene graph]
+	obj_type["object types (索引, per-object)"]
+	obj_attr["object attributes (索引, per-object)"]
+	relationships["relationships (索引)"]
+	end
+	subgraph layout_latent[layout latent code]
+	bbox_emb["bbox embedding&lt;br&gt;48维隐向量&lt;br&gt;(per-object)"]
+	angle_emb["rotation embedding&lt;br&gt;16维隐向量&lt;br&gt;(per-object)"]
+    z["z [mean, var]&lt;br&gt;(per-object)"]
+    bbox_emb --&gt; z
+    angle_emb --&gt; z
+	end
+	subgraph decoder
+	edge_emb[edge vector]
+	GCN(("GCN"))
+	obj_vecs[object vector]
+	new_obj_vecs[object vectors after GCN]
+	edge_emb --&gt; GCN
+	obj_vecs --&gt; GCN
+	GCN --&gt; new_obj_vecs
+	end
+    z -."sample &lt;br&gt;&lt;br&gt;(可能的拼接位置1)".-&gt; obj_vecs
+    z -."sample &lt;br&gt;&lt;br&gt;(可能的拼接位置2)".-&gt; new_obj_vecs
+    obj_type -- nn.Embedding --&gt; obj_vecs
+    obj_attr -- nn.Embedding --&gt; obj_vecs
+    relationships -- nn.Embedding --&gt; edge_emb
+    layout["layout(per-object) &lt;br&gt;[min_x&lt;br&gt;min_y&lt;br&gt;min_z&lt;br&gt;max_x&lt;br&gt;max_y&lt;br&gt;max_z&lt;br&gt;angle]"]
+	new_obj_vecs -- box_net --&gt; layout
+	new_obj_vecs -- angle_net --&gt; layout
+</code></pre>
+
+  <ul>
+    <li><strong>refinement (finetune) 过程</strong></li>
+  </ul>
+
+  <table>
+    <thead>
+      <tr>
+        <th><img src="media/image-20201028170332920.png" alt="image-20201028170332920"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>类似auto-decoder结构；<br>通过整个可微分通路，把sample出的layout latent反向传播最优化更新（文中称之为”refinement”/”fine tune”/”generate a layout toward a target layout”）</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <ul>
+    <li>
+<strong>效果</strong>
+      <ul>
+        <li>2.5D vs. 2D
+          <ul>
+            <li><img src="media/image-20201028170455621.png" alt="image-20201028170455621"></li>
+          </ul>
+        </li>
+        <li>diverse layout from the same scene graph
+          <ul>
+            <li><img src="media/image-20201028171028235.png" alt="image-20201028171028235"></li>
+          </ul>
+        </li>
+        <li>diverse layout generation
+          <ul>
+            <li><img src="media/image-20201028170542200.png" alt="image-20201028170542200"></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"SceneFormer: Indoor Scene Generation with Transformers"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2012.09793.pdf">[paper]</a></strong> <strong>[[code]]</strong> <strong>[[web]]</strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">TUM</code> <strong>]</strong> <br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Xinpeng Wang</code>, <code class="language-plaintext highlighter-rouge">Chandan Yeshwanth</code>, <code class="language-plaintext highlighter-rouge">Matthias Nießner</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">text description</code>, <code class="language-plaintext highlighter-rouge">transformer</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>review</strong>
+      <ul>
+        <li><img src="media/image-20210110012528951.png" alt="image-20210110012528951"></li>
+        <li>对比之前的只能在地上放东西的方法，本篇还可以生成墙上、天花板上的东西，而且整体的真实性得到提到</li>
+        <li>3D_SLN的被引</li>
+        <li>笔者评价：
+          <ul>
+            <li>手动选择关系族确实会biased，但像这篇这样直接用隐式的transformer捕捉场景的pattern也不合适。它相当于把各种物体的信息全部揉在了一团；如果在场景中添加一个新种类的物体，模型就”傻眼”了、不可适用了；
+              <ul>
+                <li>比如你的数据集卧室里只有床、枕头、柜子，有人就是要往卧室摆个电视机，你能怎么办？或者用户新购买了一种模型在各种屋子都没见过的家具怎么办？如果是本篇的方法，对于这种级别的修改，要在新数据集上<strong><u>重新训练整个</u></strong>模型，这显然是不合理、有违自然的；因为新添加的物体种类只是一种增量式的更新，已经学到的知识应该是保留的。</li>
+              </ul>
+            </li>
+            <li>比较合适的思路，应该是逐pair、逐category地考虑、建模、构建关系；
+              <ul>
+                <li>关系的种类数\(N\)不应是个定值；甚至可能不是一个有穷值；关系的划分，可能也不是离散的，而是连续的？是一个此起彼伏的概率密度函数？</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>
+<strong>任务描述</strong>：
+          <ul>
+            <li>indoor scene generation: to generate a sequence of objects, their locations and orientations conditioned on the shape and size of a room.<br>室内场景生成任务：生成一个物体序列，包括物体的位置、朝向，conditioned on 房间的形状和大小</li>
+            <li>现存的大规模室内场景数据集，使得我们可以从<code class="language-plaintext highlighter-rouge">user-defined indoor scenes</code>中提取出<code class="language-plaintext highlighter-rouge">pattern</code>，然后基于这些<code class="language-plaintext highlighter-rouge">pattern</code>生成新的场景</li>
+            <li>未来用处：生成虚拟的室内场景对于内饰供应商有商业价值：可以在AR,VR平台向用户展示，用户可以<code class="language-plaintext highlighter-rouge">interactively modify it</code>
+</li>
+          </ul>
+        </li>
+        <li>现有的方法，除了物体的位置之外，还：
+          <ul>
+            <li><strong>依赖于这些场景的2D或3D外观</strong></li>
+            <li>
+<strong>并且对物体之间的关系做出假设</strong>
+              <ul>
+                <li>目前有一些需要用到物体关系标注的方法，假定一族固定的、手动设计的物体之间的关系</li>
+                <li>
+<strong><u>本篇用transformer机制，直接从物体的raw locations和orientations来提取pattern，避免由于手动选择关系引入的bias</u></strong>
+                  <ul>
+                    <li>意思就是把pattern当成纯隐的来提取；</li>
+                    <li>一个直接的例子，比如沙发和电视之间的对应\(\Delta pose\)关系，就比较隐式，文中的方法可以很好的生成</li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>本篇 <strong>不使用任何外观信息</strong>，<strong>并且利用transformer机制自己学出来物体之间的关系</strong>
+</li>
+        <li>只需要<strong>输入</strong> <u>(空)房间的形状</u>，还有<u>房间的文字描述</u>，然后就可以生成整个房间</li>
+      </ul>
+    </li>
+    <li>
+<strong>dataset</strong>
+      <ul>
+        <li>large object and scene datasets: ModelNet, ShapeNet,</li>
+        <li>and other human-annotated scene datasets with synthetic objects / human-created scene dataset: <br>&lt;<strong>SUNCG</strong>&gt;<a href="https://sscnet.cs.princeton.edu/"><em>Semantic scene completion from a single depth image. CVPR2017</em></a>
+          <ul>
+            <li>去掉bad samples, as previous works done :
+              <ul>
+                <li>[<strong>Planit</strong>: <em>Planning and instantiating indoor scenes with relation graph and spatial prior networks. TOG2019</em> ]</li>
+                <li>[<em>Fast and flexible indoor scene synthesis via deep convolutional generative models. CVPR2019</em> ]</li>
+              </ul>
+            </li>
+            <li>最后得到 6351个卧室和1099个living room</li>
+            <li>卧室使用50种物体类型，客厅用39个物体类型</li>
+            <li>房间：用(0,90,180,270) degrees的旋转来增强数据集；位置(0,0.5)均匀分布采样</li>
+            <li>房间的句子描述数据用的是<code class="language-plaintext highlighter-rouge">heuristic</code>的方法来产生（也就是hand-crafted）</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+<strong>Overview</strong>
+      <ul>
+        <li>
+<code class="language-plaintext highlighter-rouge">auto-regressive</code>自回归方式：第\((n+1)^{th}\)物体的属性 conditioned on 前n个物体的属性</li>
+        <li><img src="media/image-20210110012645852.png" alt="image-20210110012645852"></li>
+        <li><img src="media/image-20210110012809862.png" alt="image-20210110012809862"></li>
+      </ul>
+    </li>
+    <li>
+<strong>results</strong>
+      <ul>
+        <li>如果没有给出房间形状，则用一个room-shape prior来放置物体<img src="media/image-20210110013923150.png" alt="image-20210110013923150">
+</li>
+      </ul>
+    </li>
+    <li>
+<strong>future work</strong>
+      <ul>
+        <li>可以用于真实场景的3D重建</li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Learning Canonical Representations for Scene Graph to Image Generation"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">ECCV2020</code> <strong>]</strong> <strong><a href="https://roeiherz.github.io/CanonicalSg2Im/">[web]</a></strong> <strong><a href="https://arxiv.org/pdf/1912.07414.pdf">[paper]</a></strong> <strong><a href="https://github.com/roeiherz/CanonicalSg2Im">[code]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Tel Aviv University</code>, <code class="language-plaintext highlighter-rouge">UCB</code>, <code class="language-plaintext highlighter-rouge">Bar-Ilan University</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">NVIDIA</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Roei Herzig</code>, <code class="language-plaintext highlighter-rouge">Amir Bar</code>, <code class="language-plaintext highlighter-rouge">Huijuan Xu</code>, <code class="language-plaintext highlighter-rouge">Gal Chechik</code>, <code class="language-plaintext highlighter-rouge">Trevor Darrell</code>, <code class="language-plaintext highlighter-rouge">Amir Globerson</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">semantic equivalence</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>过去的sg2im的一个不足是不能捕捉graphs中的语义等价性(semantic equivalence)
+          <ul>
+            <li>即：同样一张图片可以用多个逻辑上等价的SG来表述</li>
+          </ul>
+        </li>
+        <li>所以提出从数据中学习出canonical graph representations</li>
+        <li>主要展示3个数据集：visual genome, COCO, clevr</li>
+      </ul>
+    </li>
+    <li>
+<strong>Overview</strong>
+      <ul>
+        <li>SG to canonical weighted SG</li>
+        <li>weighted SG to layout</li>
+        <li>layout to image</li>
+      </ul>
+    </li>
+    <li>
+<strong>Scene Graph Canonicalization</strong>
+      <ul>
+        <li>transitive relation, converse relations</li>
+      </ul>
+    </li>
+    <li>
+<strong>效果</strong>
+      <ul>
+        <li><img src="media/image-20201217112917616.png" alt="image-20201217112917616"></li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<h2 id="capsule-networks">capsule networks</h2>
+
+<ul>
+  <li>keywords
+    <ul>
+      <li>Google scholar - <a href="https://scholar.google.com.hk/citations?hl=zh-CN&amp;user=JicYPdAAAAAJ&amp;view_op=list_works&amp;sortby=pubdate">GE Hinton</a>
+</li>
+    </ul>
+  </li>
+</ul>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Stacked Capsule Autoencoders"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">NeurIPS2019</code> <strong>]</strong> <strong><a href="https://papers.nips.cc/paper/2019/file/2e0d41e02c5be4668ec1b0730b3346a8-Paper.pdf">[paper]</a></strong> <strong><a href="https://github.com/phanideepgampa/stacked-capsule-networks">[code]</a></strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Oxford</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Google Brain</code>, <code class="language-plaintext highlighter-rouge">DeepMind</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Adam R. Kosiorek</code>, <code class="language-plaintext highlighter-rouge">Sara Sabour</code>, <code class="language-plaintext highlighter-rouge">Yee Whye Teh</code>, <code class="language-plaintext highlighter-rouge">Geoffrey E. Hinton</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">capsule networks</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li><img src="media/image-20201216165444435.png" alt="image-20201216165444435"></li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Canonical Capsules: Unsupervised Capsules in Canonical Pose"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2012.04718.pdf">[paper]</a></strong> <strong>[[code]]</strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">University of British Columbia</code>, <code class="language-plaintext highlighter-rouge">University of Toronto</code>, <code class="language-plaintext highlighter-rouge">University of Victoria</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">google</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Weiwei Sun</code>, <code class="language-plaintext highlighter-rouge">Andrea Tagliasacchi</code>, <code class="language-plaintext highlighter-rouge">Boyang Deng</code>, <code class="language-plaintext highlighter-rouge">Sara Sabour</code>, <code class="language-plaintext highlighter-rouge">Soroosh Yazdani</code>, <code class="language-plaintext highlighter-rouge">Geoffrey Hinton</code>, <code class="language-plaintext highlighter-rouge">Kwang Moo Yi</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">capsule network</code>, <code class="language-plaintext highlighter-rouge">3D pointclouds</code>, <code class="language-plaintext highlighter-rouge">Canonical</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>unsupervised capsule architecture for 3D point clouds</li>
+        <li><img src="media/image-20201216170228754.png" alt="image-20201216170228754"></li>
+      </ul>
+    </li>
+    <li>
+<strong>overview</strong>
+      <ul>
+        <li><img src="media/image-20201216171806453.png" alt="image-20201216171806453"></li>
+        <li>decomposition
+          <ul>
+            <li>把点云\(\boldsymbol{P} \in \mathbb{R}^{P \times D}\)用一个encoder计算出K-fold attention map \(\boldsymbol{A} \in \mathbb{R}^{P \times K}\)和逐点的feature \(\boldsymbol{F} \in \mathbb{R}^{P \times C}\)</li>
+            <li>然后计算\(k\)-th capsule的pose \(\boldsymbol{\theta}_k \in \mathbb{R}^3\) 和对应的capsule descriptor \(\boldsymbol{\beta}_k \in \mathbb{R}^C\)
+              <ul>
+                <li>
+\[\boldsymbol{\theta}_k = \frac {\sum_p A_{p,k}P_p} {\sum_p A_{p,k}}\]
+                </li>
+                <li>
+\[\boldsymbol{\beta}_k=\frac {\sum_p A_{p,k}F_p} {\sum_p A_{p,k}}\]
+                </li>
+                <li>其实就是attention map加权和后的点坐标和attention map加权和后的点feature</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>canonicalization
+          <ul>
+            <li>单纯地保证不变性和等变性并不足以学出一个object-centric的3D表征，因为缺乏一种(无监督)的机制来==<strong><u>bring information into a shared "object-centric" reference frame</u></strong>==</li>
+            <li>并且，一个”合适”的canonical frame其实就是一个convention，所以我们需要一个机制让网络做出一个<strong><u>选择</u></strong>——并且必须在所有物体中都是一致的
+              <ul>
+                <li>比如，一个沿着+z轴放置的飞机和一个沿着+y轴放置的飞机是<strong><u>一样好</u></strong>的</li>
+              </ul>
+            </li>
+            <li>为了实现这一点：link the capsule descriptors to the capsule poses in canonical space；i.e. ask that objects with similar appearance to be located in similar Euclidean neighborhoods in canonical space
+              <ul class="task-list">
+                <li>具体做法是用一个全连接层，从descriptor直接回归出每个capsule的pose</li>
+                <li>\(\overline{\theta}=\mathcal{K}(\beta)\)<br> \(\overline{\theta} \in \mathbb{R}^{K\times 3}\)是canonical poses，<br>\(\mathcal{K}\)是全连接神经网络，<br>\(\beta \in \mathbb{R}^{K \times C}\) 是capsule的descriptor</li>
+                <li class="task-list-item">
+<input type="checkbox" class="task-list-item-checkbox" disabled>Q: why?居然直接从K个胶囊描述子直接回归出K个canonical pose</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+<hr>
+
+<p><strong><code class="language-plaintext highlighter-rouge">"Unsupervised part representation by Flow Capsules"</code></strong><br>
+<strong>[</strong> <code class="language-plaintext highlighter-rouge">arXiv2020</code> <strong>]</strong> <strong><a href="https://arxiv.org/pdf/2011.13920.pdf">[paper]</a></strong> <strong>[[code]]</strong> <strong>[</strong> <img class="emoji" title=":mortar_board:" alt=":mortar_board:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f393.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">University of Toronto</code> <strong>]</strong> <strong>[</strong> <img class="emoji" title=":office:" alt=":office:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3e2.png" height="20" width="20"> <code class="language-plaintext highlighter-rouge">Google</code> <strong>]</strong><br>
+<strong>[</strong>  <code class="language-plaintext highlighter-rouge">Sara Sabour</code>, <code class="language-plaintext highlighter-rouge">Andrea Tagliasacchi</code>, <code class="language-plaintext highlighter-rouge">Soroosh Yazdani</code>, <code class="language-plaintext highlighter-rouge">Geoffrey E. Hinton</code>, <code class="language-plaintext highlighter-rouge">David J. Fleet</code>  <strong>]</strong><br>
+<strong>[</strong> <em><code class="language-plaintext highlighter-rouge">capsule networks</code>, <code class="language-plaintext highlighter-rouge">motion cue</code></em> <strong>]</strong></p>
+
+<details>
+  <summary>Click to expand</summary>
+
+  <ul>
+    <li>
+<strong>Motivation</strong>
+      <ul>
+        <li>capsule networks不能高效地学到low level的part descriptions</li>
+        <li>exploit motion as a powerful perceptual cue for part definition <br>用运动作为一个部件定义的有力的感知线索</li>
+      </ul>
+    </li>
+    <li>results
+      <ul>
+        <li>从复杂背景中找出来原来的三角形、正方形、圆形等<br><img src="media/image-20201216170936463.png" alt="image-20201216170936463">
+</li>
+        <li>对于运动的人学出来的部件<img src="media/image-20201216171020883.png" alt="image-20201216171020883">
+</li>
+      </ul>
+    </li>
+  </ul>
+
+</details>
+
+
+  </article>
+
+  
+
+</div>
+
+      </div>
+    </div>
+
+    <footer>
+
+  <div class="wrapper">
+    © Copyright 2021 Jianfei Guo.
+    Powered by <a href="http://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>. Photos from <a href="https://unsplash.com" target="_blank">Unsplash</a>.
+
+    
+  </div>
+
+</footer>
+
+
+    <!-- Load jQuery -->
+<script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+
+<!-- Load Common JS -->
+<script src="https://ventusff.github.io/assets/js/common.js"></script>
+
+
+
+
+<!-- Load Anchor JS -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/anchor-js/3.2.2/anchor.min.js"></script>
+<script>
+  anchors.options.visible = 'always';
+  anchors.add('article h2, article h3, article h4, article h5, article h6');
+</script>
+
+
+
+<!-- Load fancybox -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
+<!-- Include custom icon fonts -->
+<link rel="stylesheet" href="https://ventusff.github.io/assets/css/fontawesome-all.min.css">
+<link rel="stylesheet" href="https://ventusff.github.io/assets/css/academicons.min.css">
+<link rel="stylesheet" href="https://ventusff.github.io/assets/iconfont/iconfont.css">
+
+<!-- Google Analytics -->
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-XXXXXXXXX', 'auto');
+ga('send', 'pageview');
+</script>
+
+    
+  </body>
+  
+<!-- Mermaid Js -->
+<script>
+
+    // mermaid rendering: inspired by https://stackoverflow.com/questions/53883747/how-to-make-github-pages-markdown-support-mermaid-diagram
+    // mermiad in details tag: inspired by https://gitlab.com/gitlab-org/gitlab/-/issues/28495
+    //          and by https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/assets/javascripts/behaviors/markdown/render_mermaid.js
+
+    function renderMermaids($els) {
+        if (!$els.length) return;
+
+        var config = {
+            startOnLoad: false,
+            theme: 'neutral', // forest
+            securityLevel: 'loose',
+            flowchart:{
+                    useMaxWidth:true,
+                    htmlLabels:false, // important for not squeezing blocks
+                }
+        };
+        // const theme =localStorage.getItem("theme");
+        // if(theme == "dark") config.theme = 'dark';  // currently needs to refresh to make dark mode toggle
+        mermaid.initialize(config);
+
+        $els.each((i, el) => {
+
+            // Mermaid doesn't like `<br />` tags, so collapse all like tags into `<br>`, which is parsed correctly.
+            const source = el.textContent.replace(/<br\s*\/>/g, '<br>');
+
+            // Remove any extra spans added by the backend syntax highlighting.
+            Object.assign(el, { textContent: source });
+
+            mermaid.init(undefined, el, id => {
+                const svg = document.getElementById(id);
+
+                // As of https://github.com/knsv/mermaid/commit/57b780a0d,
+                // Mermaid will make two init callbacks:one to initialize the
+                // flow charts, and another to initialize the Gannt charts.
+                // Guard against an error caused by double initialization.
+                if (svg.classList.contains('mermaid')) {
+                    console.log("return");
+                    return;
+                }
+
+                // svg.classList.add('mermaid'); //will add new bug
+
+                // pre > code > svg
+                svg.closest('pre').replaceWith(svg);
+
+                // We need to add the original source into the DOM to allow Copy-as-GFM
+                // to access it.
+                const sourceEl = document.createElement('text');
+                sourceEl.classList.add('source');
+                sourceEl.setAttribute('display', 'none');
+                sourceEl.textContent = source;
+
+                svg.appendChild(sourceEl);
+
+            });
+        });
+
+    }
+
+    const $els = $(document).find('.language-mermaid');
+    if ($els.length)
+    {
+        const visibleMermaids = $els.filter(function filter() {
+            return $(this).closest('details').length === 0 && $(this).is(':visible');
+        });
+
+        renderMermaids(visibleMermaids);
+
+        $els.closest('details').one('toggle', function toggle() {
+            if (this.open) {
+                renderMermaids($(this).find('.language-mermaid'));
+            }
+        });
+    }
+
+
+
+</script>
+
+
+  <!-- Auto config image to fancybox -->
+<script>
+    $(document).ready(function() {
+        $("article img[class!='emoji']").each(function() {
+            var currentImage = $(this);
+            currentImage.wrap("<a href='" + currentImage.attr("src") + "' data-fancybox='lightbox' data-caption='" + currentImage.attr("alt") + "'></a>");
+        });
+    });
+</script>
+
+</html>
